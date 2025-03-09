@@ -6,6 +6,7 @@ using DotNetty.Codecs;
 using System.Collections.Concurrent;
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
+using JT1078NetCore.Http;
 
 namespace JT1078NetCore.Socket
 {
@@ -54,6 +55,7 @@ namespace JT1078NetCore.Socket
                 //bootstrap.LocalAddress("113.22.61.166", 2202);                                
                 IPAddress iPAddress = IPAddress.Parse("127.0.0.1");
                 IPEndPoint iPEndPoint = new IPEndPoint(iPAddress, 2202);
+                new WsService().Init();
                 return bootstrap.BindAsync(iPEndPoint);
 
             }

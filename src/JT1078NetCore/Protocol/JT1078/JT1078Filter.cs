@@ -31,8 +31,11 @@ namespace JT1078NetCore.Protocol.JT1078
                         JT1078Package fullpackage = JT1078Serializer.Merge(package);
                         if(fullpackage != null)
                         {
-                            var videoTag = encoder.EncoderVideoTag(fullpackage, !session.HasFlvHeader);
-                            session.HasFlvHeader = true;
+                            if(Global.Ws != null )
+                            {
+                                var videoTag = encoder.EncoderVideoTag(fullpackage, !Global.Ws.HasHeader);
+                                Global.Ws.HasHeader = true;
+                            }
                         }
                     }
                 }

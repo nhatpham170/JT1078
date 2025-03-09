@@ -40,7 +40,7 @@ namespace JT1078.SignalR.Test
                         .AllowAnyHeader()
                         .AllowCredentials()
                         .SetIsOriginAllowed(o => true);
-            }));
+            }));            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,6 +63,11 @@ namespace JT1078.SignalR.Test
             {
                 endpoints.MapControllers();
             });
+            app.UseCors(options => options.AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithOrigins("http://localhost:5001")
+            .AllowCredentials()
+            );
         }
     }
 }
