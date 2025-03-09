@@ -18,7 +18,7 @@ namespace JT1078.Hls.Test
             TS_SDT_Package package = new TS_SDT_Package();
             package.Header = new TS_Header();
             package.Header.PID = 0x0011;
-            package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
+            //package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
             package.Header.ContinuityCounter = 0;
             package.TableId = 0x42;
             package.TransportStreamId = 0x0001;
@@ -33,12 +33,12 @@ namespace JT1078.Hls.Test
                 ServiceId = 0x0001,
                 EITScheduleFlag = 0x00,
                 EITPresentFollowingFlag = 0x00,
-                RunningStatus = TS_SDT_Service_RunningStatus.运行,
+                RunningStatus = TS_SDT_Service_RunningStatus.?????,
                 FreeCAMode = 0x00,
                 Descriptors = new List<Descriptors.TS_SDT_Service_Descriptor> {
                      new Descriptors.TS_SDT_Service_Descriptor{
                              Tag=0x48,
-                             ServiceType= TS_SDT_Service_Descriptor_ServiceType.数字电视业务,
+                             ServiceType= TS_SDT_Service_Descriptor_ServiceType.??????,
                              ServiceProvider="FFmpeg",
                              ServiceName="Service01"
                      }

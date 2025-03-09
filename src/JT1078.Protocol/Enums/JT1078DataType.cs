@@ -11,5 +11,10 @@ namespace JT1078.Protocol.Enums
         视频B帧=2,
         音频帧=3,
         透传数据=4,
+        VideoI = 0,
+        VideoP = 1,
+        VideoB = 2,
+        Audio = 3,
+        TransparentData = 4,
     }
 }

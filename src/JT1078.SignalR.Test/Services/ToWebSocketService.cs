@@ -19,6 +19,7 @@ using JT1078.Protocol.Extensions;
 using JT1078.Protocol.H264;
 using System.Net.WebSockets;
 using JT1078.Protocol.Enums;
+using JT1078.Protocol.MessagePack;
 
 namespace JT1078.SignalR.Test.Services
 {
@@ -51,7 +52,7 @@ namespace JT1078.SignalR.Test.Services
         public List<byte[]> q = new List<byte[]>();
 
         void Init()
-        {
+        {          
             List<JT1078Package> packages = new List<JT1078Package>();
             var lines = File.ReadAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "H264", "jt1078_6.txt"));
             int mergeBodyLength = 0;
@@ -84,7 +85,7 @@ namespace JT1078.SignalR.Test.Services
                     Mp4Frame mp4Frame = new Mp4Frame
                     {
                         Key = package.GetKey(),
-                        KeyFrame = package.Label3.DataType == JT1078DataType.视频I帧
+                        KeyFrame = package.Label3.DataType == JT1078DataType.VideoI
                     };
                     mp4Frame.NALUs = h264NALUs;
                     mp4Frames.Enqueue(mp4Frame);

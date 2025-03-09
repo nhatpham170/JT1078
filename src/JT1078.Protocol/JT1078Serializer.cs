@@ -81,7 +81,7 @@ namespace JT1078.Protocol
         /// <param name="channelType">package type is live or history</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static JT1078Package Merge(JT1078Package jT1078Package,JT808ChannelType channelType)
+        public static JT1078Package Merge(JT1078Package jT1078Package,JT808ChannelType channelType = JT808ChannelType.Live)
         {
             string cacheKey = jT1078Package.GetKey();
             var packageGroup = channelType switch

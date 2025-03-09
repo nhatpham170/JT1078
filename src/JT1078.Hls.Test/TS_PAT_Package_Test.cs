@@ -33,7 +33,7 @@ namespace JT1078.Hls.Test
             TS_PAT_Package package = new TS_PAT_Package();
             package.Header = new TS_Header();
             package.Header.PID = 0;
-            package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
+            //package.Header.AdaptationFieldControl = AdaptationFieldControl.无自适应域_仅含有效负载;
             package.Header.ContinuityCounter = 0;
             package.TableId = 0;
             package.TransportStreamId = 0x0001;
