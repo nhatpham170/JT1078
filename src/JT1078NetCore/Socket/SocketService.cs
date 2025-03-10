@@ -53,10 +53,10 @@ namespace JT1078NetCore.Socket
                       }));
                 //bootstrap.LocalAddress("127.0.0.1",2202);
                 //bootstrap.LocalAddress("113.22.61.166", 2202);                                
-                IPAddress iPAddress = IPAddress.Parse("127.0.0.1");
-                IPEndPoint iPEndPoint = new IPEndPoint(iPAddress, 2202);
+                //IPAddress iPAddress = IPAddress.Parse("127.0.0.1");
+                //IPEndPoint iPEndPoint = new IPEndPoint(iPAddress, 2202);
                 new WsService().Init();
-                return bootstrap.BindAsync(iPEndPoint);
+                return bootstrap.BindAsync(2202);
 
             }
             catch (Exception ex)

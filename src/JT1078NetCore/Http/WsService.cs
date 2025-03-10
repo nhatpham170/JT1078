@@ -12,6 +12,8 @@ namespace JT1078NetCore.Http
         public class WsSession : WebSocketBehavior
         {
             public bool HasHeader = false;
+            public ulong StartTime = 0;
+            public ulong LastTime = 0;
             protected override void OnClose(CloseEventArgs e)
             {
                 //if (_name == null)
@@ -35,8 +37,8 @@ namespace JT1078NetCore.Http
                 //Sessions.Broadcast(msg);
                 string id = this.ID;
                 Global.Ws = this;
-                byte[] demo = Encoding.UTF8.GetBytes("FLV");
-                this.Send(demo);
+                //byte[] demo = Encoding.UTF8.GetBytes("FLV");
+                //this.Send(demo);
             }
             protected override void OnMessage(MessageEventArgs e)
             {
@@ -48,9 +50,10 @@ namespace JT1078NetCore.Http
         }
         public void Init()
         {
+            //System.Net.Http.HttpContent httpContent = new System.Net.Http.HttpContent();
+            //httpContent.
             var wssv = new WebSocketServer(5001);
-
-            wssv.AddWebSocketService<WsSession>("/live");
+            wssv.AddWebSocketService<WsSession>("/live");            
             wssv.Start();            
         }
     }

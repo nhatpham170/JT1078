@@ -340,7 +340,7 @@ namespace JT1078.Flv
                     flvMessagePackWriter.WriteArray(scriptTag);
                     // first video tag
                     var firstVideoTag = EncoderFirstVideoTag(spsInfo, sps, pps, sei);
-                    flvMessagePackWriter.WriteArray(firstVideoTag);
+                    flvMessagePackWriter.WriteArray(firstVideoTag);              
                 }
                 foreach (var naln in nalus)
                 {
@@ -413,6 +413,57 @@ namespace JT1078.Flv
                     flvTags.VideoTagsData.FrameType = FrameType.InterFrame;
                 }
                 flvTags.VideoTagsData.VideoData.CompositionTime = nALU.LastFrameInterval;
+                flvTags.VideoTagsData.VideoData.MultiData = new List<byte[]>();
+                flvTags.VideoTagsData.VideoData.MultiData.Add(nALU.RawData);
+                //忽略sei
+                //if (sei != null && sei.RawData != null && sei.RawData.Length > 0)
+                //{
+                //    flvTags.VideoTagsData.VideoData.MultiData.Add(sei.RawData);
+                //}
+                flvMessagePackWriter.WriteFlvTag(flvTags);
+                flvMessagePackWriter.WriteUInt32((uint)(flvTags.DataSize + 11));
+                return flvMessagePackWriter.FlushAndGetArray();
+            }
+            finally
+            {
+                FlvArrayPool.Return(buffer);
+            }
+        }
+
+        public byte[] EncoderOtherVideoTag(H264NALU nALU, uint time, ushort compositionTime)
+        {
+            byte[] buffer = FlvArrayPool.Rent(nALU.RawData.Length * 2 + 4096);
+            try
+            {
+                FlvMessagePackWriter flvMessagePackWriter = new FlvMessagePackWriter(buffer);
+                //flv body video tag
+                //flv body tag header
+                FlvTags flvTags = new FlvTags
+                {
+                    Type = TagType.Video,
+                    //pts
+                    Timestamp = time,
+                    TimestampExt = 0,
+                    StreamId = 0,
+                    //flv body tag body
+                    VideoTagsData = new VideoTags()
+                };
+                flvTags.VideoTagsData.VideoData = new AvcVideoPacke
+                {
+                    AvcPacketType = AvcPacketType.Raw
+                };
+                //1: keyframe (for AVC, a seekable frame) —— 即H.264的IDR帧；
+                //2: inter frame(for AVC, a non - seekable frame) —— H.264的普通I帧；
+                //ref:https://www.cnblogs.com/chyingp/p/flv-getting-started.html
+                if (nALU.NALUHeader.NalUnitType == NalUnitType.IDR)
+                {
+                    flvTags.VideoTagsData.FrameType = FrameType.KeyFrame;
+                }
+                else
+                {
+                    flvTags.VideoTagsData.FrameType = FrameType.InterFrame;
+                }
+                flvTags.VideoTagsData.VideoData.CompositionTime = compositionTime;
                 flvTags.VideoTagsData.VideoData.MultiData = new List<byte[]>();
                 flvTags.VideoTagsData.VideoData.MultiData.Add(nALU.RawData);
                 //忽略sei

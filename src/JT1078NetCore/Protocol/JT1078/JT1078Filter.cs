@@ -33,8 +33,20 @@ namespace JT1078NetCore.Protocol.JT1078
                         {
                             if(Global.Ws != null )
                             {
+                                //ulong timeNow = (ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                //if (Global.Ws.StartTime == 0)
+                                //{
+                                //    Global.Ws.StartTime = timeNow;
+                                //    Global.Ws.LastTime = timeNow;
+                                //}
+                                //fullpackage.Timestamp = fullpackage.Timestamp - 500;
+                                //fullpackage.LastFrameInterval = (ushort)(fullpackage.LastFrameInterval - 100);
+                                //fullpackage.Timestamp = (ulong)(timeNow - Global.Ws.StartTime);
+                                //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
+                                //Global.Ws.LastTime = timeNow;
                                 var videoTag = encoder.EncoderVideoTag(fullpackage, !Global.Ws.HasHeader);
                                 Global.Ws.HasHeader = true;
+                                Global.Ws.Writes(videoTag);
                             }
                         }
                     }
