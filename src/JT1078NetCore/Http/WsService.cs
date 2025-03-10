@@ -52,9 +52,9 @@ namespace JT1078NetCore.Http
         {
             //System.Net.Http.HttpContent httpContent = new System.Net.Http.HttpContent();
             //httpContent.
-            var wssv = new WebSocketServer(5001);
-            wssv.AddWebSocketService<WsSession>("/live");            
-            wssv.Start();            
+            var wssv = new WebSocketSharp.Server.WebSocketServer(5001);
+            wssv.AddWebSocketService<WsSession>("/live");
+            wssv.Start();
         }
     }
 }

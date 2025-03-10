@@ -11,6 +11,7 @@ using WebSocketSharp.Server;
 using static JT1078NetCore.Http.WsService;
 using static System.Net.WebRequestMethods;
 using System;
+using System.Threading.Tasks;
 
 namespace JT1078ServerWF
 {
@@ -55,28 +56,33 @@ namespace JT1078ServerWF
             new WsService().Init();
             bootstrapChannel = await bootstrap.BindAsync(2202);
         }
-
-        private async void InitHTTP()
+        private async Task InitHTTP()
         {
-            var builder = WebApplication.CreateBuilder();
-            builder.Services.AddControllers();
-            var app = builder.Build();
-            app.UseSwagger();
-            app.UseSwaggerUI();
-            app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseAuthorization();
-            app.MapControllers();
-            app.Run();
-
+            JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
+            await webSocketServer.Init();
         }
+        //private async void InitHTTP()
+        //{
+        //    var builder = WebApplication.CreateBuilder();
+        //    builder.Services.AddControllers();
+        //    var app = builder.Build();
+        //    app.UseSwagger();
+        //    app.UseSwaggerUI();
+        //    app.UseHttpsRedirection();
+        //    app.UseRouting();
+        //    app.UseAuthorization();
+        //    app.MapControllers();
+        //    app.Run();
+
+        //}
 
         private void btnHttpInit_Click(object sender, EventArgs e)
         {
-            HttpServer httpServer = new HttpServer(5002);
-            httpServer.AddWebSocketService<WsSession>("/live2");
-            httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
-            httpServer.Start();
+            _ = InitHTTP();
+            //HttpServer httpServer = new HttpServer(5002);
+            //httpServer.AddWebSocketService<WsSession>("/live2");
+            //httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
+            //httpServer.Start();
         }
     }
 }
