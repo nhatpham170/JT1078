@@ -1,4 +1,5 @@
 ﻿using DotNetty.Transport.Channels;
+using JT1078NetCore.Socket;
 using System.Collections.Concurrent;
 using System.Net;
 
@@ -33,5 +34,9 @@ namespace JT1078NetCore.Common
         public static ConcurrentDictionary<string, string> DictForwardMapperChannels = new ConcurrentDictionary<string, string>();
         public static ConcurrentDictionary<string, IChannel> DictForward2Channels = new ConcurrentDictionary<string, IChannel>();
         public static ConcurrentDictionary<string, string> DictForwardMapper2Channels = new ConcurrentDictionary<string, string>();        
+        public static ConcurrentDictionary<string, SocketSession> SESSIONS_CHANNEL = new ConcurrentDictionary<string, SocketSession>();        
+        public static ConcurrentDictionary<string, SocketSession> SESSIONS_MAIN = new ConcurrentDictionary<string, SocketSession>();        
+        public static ConcurrentDictionary<string, SessionProxy> SESSIONS_PROXY = new ConcurrentDictionary<string, SessionProxy>();        
+        public static ConcurrentDictionary<string, string> CHANNEL_PROXY = new ConcurrentDictionary<string, string>();        
     }
 }

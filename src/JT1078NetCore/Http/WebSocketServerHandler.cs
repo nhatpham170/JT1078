@@ -9,11 +9,12 @@ using DotNetty.Codecs.Http.WebSockets;
 using JT1078NetCore.Common;
 using System.Web;
 using DotNetty.Common;
+using JT1078NetCore.Socket;
 
 
 namespace JT1078NetCore.Http
 {
-    public class WebSocketServerHandler: SimpleChannelInboundHandler<object>
+    public class WebSocketServerHandler : SimpleChannelInboundHandler<object>
     {
         const string WebsocketPath = "/websocket";
 
@@ -57,9 +58,14 @@ namespace JT1078NetCore.Http
             try
             {
                 string channelId = context.Channel.Id.ToString();
-                IChannelHandlerContext tmp;
-                IChannel channel;
-                //Global.DictChannels.TryRemove(channelId, out channel);
+                string token;
+                if(Global.CHANNEL_PROXY.TryGetValue(channelId, out token))
+                {
+                    SessionProxy sessionProxy;
+                    if(Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy)){
+                        sessionProxy.Close();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -72,9 +78,60 @@ namespace JT1078NetCore.Http
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
-
+        readonly TaskCompletionSource completionSource;
+        public Task HandshakeCompletion => this.completionSource.Task;
         void HandleHttpRequest(IChannelHandlerContext ctx, IFullHttpRequest req)
         {
+            string[] arr = req.Uri.Split('?');
+            string path = arr[0];
+            switch (path)
+            {
+                case "/api/live":
+                    HttpApiLive.Process(ctx, req);
+                    return;
+                case "/api/playback":
+
+                    break;
+                default:
+                    break;
+            }
+            if (path.StartsWith("/live/"))
+            {
+                //req.Headers.Set(HttpHeaderNames.SecWebsocketKey, "MwQH7qrBwthWi9keBJueTg==");
+                // is websocket 
+                string token = path.Substring(path.Length - 32);
+                SessionProxy sessionProxy;
+                if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy) || true)
+                {
+                    var wsF = new WebSocketServerHandshakerFactory(
+                    GetWebSocketLocation(req), null, true, 5 * 1024 * 1024, true);
+                    //var response = new DefaultFullHttpResponse(
+                    //      HttpVersion.Http11,
+                    //      HttpResponseStatus.SwitchingProtocols
+                    //  );
+                    //ctx.WriteAndFlushAsync(response);
+                    handshaker = wsF.NewHandshaker(req);
+                    if (handshaker == null)
+                    {
+                        WebSocketServerHandshakerFactory.SendUnsupportedVersionResponse(ctx.Channel);
+                    }
+                    else
+                    {
+                        handshaker.HandshakeAsync(ctx.Channel, req, null);                         
+                    }
+                    sessionProxy.Subscribe(ctx);
+                    //ctx.WriteAsync(new byte[2] { 0x10, 0x11 });
+                    Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
+                }
+                else
+                {
+                    // token invalid
+                    ctx.Channel.CloseAsync();
+                }
+                return;
+            }            
+            
+            
             // Handle a bad request.
             if (!req.Result.IsSuccess)
             {

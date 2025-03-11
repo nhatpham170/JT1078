@@ -17,6 +17,7 @@
     <PackageReference Include="DotNetty.Transport" Version="0.7.6" />
     <PackageReference Include="DotNetty.Transport.Libuv" Version="0.7.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="websocket-sharp-Net6.0" Version="1.0.3.1" />
   </ItemGroup>

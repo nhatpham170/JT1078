@@ -52,10 +52,10 @@ namespace JT1078NetCore.Http
             }
 
             X509Certificate2 tlsCertificate = null;
-            if (ServerSettings.IsSsl)
-            {
-                tlsCertificate = new X509Certificate2(Path.Combine(CommonHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
-            }
+            //if (ServerSettings.IsSsl)
+            //{
+            //    tlsCertificate = new X509Certificate2(Path.Combine(CommonHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
+            //}
             try
             {
                 var bootstrap = new ServerBootstrap();
@@ -100,7 +100,6 @@ namespace JT1078NetCore.Http
                 Console.WriteLine("Listening on "
                     + $"{(ServerSettings.IsSsl ? "wss" : "ws")}"
                     + $"://127.0.0.1:{port}/websocket");
-                //Console.ReadLine();
 
                 //await bootstrapChannel.CloseAsync();
             }

@@ -12,6 +12,9 @@ using static JT1078NetCore.Http.WsService;
 using static System.Net.WebRequestMethods;
 using System;
 using System.Threading.Tasks;
+using JT1078NetCore.Utils;
+using Microsoft.AspNetCore.Http;
+using System.Web;
 
 namespace JT1078ServerWF
 {
@@ -55,11 +58,12 @@ namespace JT1078ServerWF
                   }));
             new WsService().Init();
             bootstrapChannel = await bootstrap.BindAsync(2202);
+            JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
+            await webSocketServer.Init();
         }
         private async Task InitHTTP()
         {
-            JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
-            await webSocketServer.Init();
+          
         }
         //private async void InitHTTP()
         //{
@@ -80,8 +84,33 @@ namespace JT1078ServerWF
         {
             _ = InitHTTP();
             //HttpServer httpServer = new HttpServer(5002);
-            //httpServer.AddWebSocketService<WsSession>("/live2");
-            //httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
+            //httpServer.OnGet += (sender, e) =>
+            //{
+            //    var req = e.Request;
+            //    var res = e.Response;
+            //    var path = req.RawUrl;
+            //    try
+            //    {
+            //       if(path.StartsWith("/api/live"))
+            //        {
+            //            // add proxy
+            //            Uri myUri = new Uri("http://www.example.com?param1=good&param2=bad");
+            //            var paramQuery = HttpUtility.ParseQueryString(path);
+            //            string app = paramQuery.Get("app").ToString();
+            //            string imei = paramQuery.Get("imei").ToString();
+            //            string ch = paramQuery.Get("ch").ToString();        
+            //            string token = Guid.NewGuid().ToString();
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        res.Close();
+            //        ExceptionHandler.ExceptionProcess(ex);
+            //    }             
+                
+            //};
+            ////httpServer.AddWebSocketService<WsSession>("/live2");
+            ////httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
             //httpServer.Start();
         }
     }

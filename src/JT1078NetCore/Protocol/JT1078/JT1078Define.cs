@@ -1,4 +1,5 @@
-﻿using JT1078NetCore.Socket;
+﻿using JT1078NetCore.Common;
+using JT1078NetCore.Socket;
 using JT1078NetCore.Utils;
 
 namespace JT1078NetCore.Protocol.JT1078
@@ -32,6 +33,8 @@ namespace JT1078NetCore.Protocol.JT1078
                 hex.ReadInt16();
                 session.Imei = hex.ReadBCD();
                 session.Chl = hex.ReadByte() & 0x0F;
+                session.PlayType = MediaDefine.PlayType.Live;
+                session.StreamType = 0;
                 session.Protocol = "JT1078";
                 session.Valid = true;
                 return true;

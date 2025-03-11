@@ -31,23 +31,29 @@ namespace JT1078NetCore.Protocol.JT1078
                         JT1078Package fullpackage = JT1078Serializer.Merge(package);
                         if(fullpackage != null)
                         {
-                            if(Global.Ws != null )
+                            //if(Global.Ws != null )
+                            //{
+                            //    //ulong timeNow = (ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                            //    //if (Global.Ws.StartTime == 0)
+                            //    //{
+                            //    //    Global.Ws.StartTime = timeNow;
+                            //    //    Global.Ws.LastTime = timeNow;
+                            //    //}
+                            //    //fullpackage.Timestamp = fullpackage.Timestamp - 500;
+                            //    //fullpackage.LastFrameInterval = (ushort)(fullpackage.LastFrameInterval - 100);
+                            //    //fullpackage.Timestamp = (ulong)(timeNow - Global.Ws.StartTime);
+                            //    //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
+                            //    //Global.Ws.LastTime = timeNow;
+                                
+                            //}
+                            if (session.FlvHeader == null)
                             {
-                                //ulong timeNow = (ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                                //if (Global.Ws.StartTime == 0)
-                                //{
-                                //    Global.Ws.StartTime = timeNow;
-                                //    Global.Ws.LastTime = timeNow;
-                                //}
-                                //fullpackage.Timestamp = fullpackage.Timestamp - 500;
-                                //fullpackage.LastFrameInterval = (ushort)(fullpackage.LastFrameInterval - 100);
-                                //fullpackage.Timestamp = (ulong)(timeNow - Global.Ws.StartTime);
-                                //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
-                                //Global.Ws.LastTime = timeNow;
-                                var videoTag = encoder.EncoderVideoTag(fullpackage, !Global.Ws.HasHeader);
-                                Global.Ws.HasHeader = true;
-                                Global.Ws.Writes(videoTag);
+                                byte[] flvHeaderTag = encoder.EncoderFlvHeader(fullpackage);
+                                session.FlvHeader = flvHeaderTag;
                             }
+                            var videoTag = encoder.EncoderVideoTag(fullpackage, false);
+                            session.LastFrame = videoTag;
+                            session.Broadcast(videoTag);
                         }
                     }
                 }
