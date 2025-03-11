@@ -119,7 +119,7 @@ namespace JT1078NetCore.Http
                     {
                         handshaker.HandshakeAsync(ctx.Channel, req, null);                         
                     }
-                    sessionProxy.Subscribe(ctx);
+                    //sessionProxy.Subscribe(ctx);
                     //ctx.WriteAsync(new byte[2] { 0x10, 0x11 });
                     Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
                 }

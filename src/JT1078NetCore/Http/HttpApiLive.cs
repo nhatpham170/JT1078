@@ -17,11 +17,11 @@ namespace JT1078NetCore.Http
         public const string TYPE = MediaDefine.PlayType.Live;
         public static string Protocol()
         {
-            return "http://localhost:8080/live";
+            return "http://localhost:5001/live";
         }
         public static string ProtocolWs()
         {
-            return "ws://localhost:8080/live";
+            return "ws://localhost:5001/live";
         }
         public struct LiveResponse
         {
@@ -46,6 +46,7 @@ namespace JT1078NetCore.Http
                 response.token = SocketSession.NewToken();
                 response.status = 1;
                 response.link = $"{ProtocolWs()}/{imei}_{ch}_{streamType}_{response.token}";
+                string pathProxy = $"/{TYPE}/{imei}_{ch}_{streamType}_{response.token}";
                 SocketSession session = new SocketSession();
                 session.PlayType = TYPE;
                 session.Imei = imei;
@@ -60,10 +61,10 @@ namespace JT1078NetCore.Http
                 }                
                 Global.SESSIONS_MAIN[sessionOrigin.Key] = sessionOrigin;
                 // add proxy
-                SessionProxy sessionProxy = new SessionProxy(response.token);
-                sessionProxy.Key = key;
-                Global.SESSIONS_PROXY[response.token] = sessionProxy;
-
+                //SessionProxy sessionProxy = new SessionProxy(response.token);
+                //sessionProxy.Key = key;
+                //Global.SESSIONS_PROXY[response.token] = sessionProxy;
+                Global.WsServer.AddWebSocketService<SessionProxy>(pathProxy);
                 // add proxy
                 Reponse(ctx, req, response);
             }

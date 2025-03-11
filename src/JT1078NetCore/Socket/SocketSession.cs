@@ -1,5 +1,6 @@
 ﻿using DotNetty.Transport.Channels;
 using JT1078NetCore.Common;
+using WebSocketSharp.Server;
 
 namespace JT1078NetCore.Socket
 {
@@ -78,9 +79,12 @@ namespace JT1078NetCore.Socket
             {
                 if(proxy.SentAt == 0)
                 {
-                    proxy.Send(FlvHeader);
+                    proxy.SendMsg(FlvHeader);
+                    //Send(FlvHeader);
+                    //proxy.Send(FlvHeader);
                 }
-                proxy.Send(data);
+                //proxy.Send(data);
+                proxy.SendMsg(data);
             }
         }
     }
