@@ -44,15 +44,14 @@ namespace JT1078NetCore.Protocol.JT1078
                             //    //fullpackage.Timestamp = (ulong)(timeNow - Global.Ws.StartTime);
                             //    //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
                             //    //Global.Ws.LastTime = timeNow;
-                                
                             //}
-                            if (session.FlvHeader == null)
+                            var videoTag = encoder.EncoderVideoTag(fullpackage, !session.HasFlvHeader);
+                            session.HasFlvHeader = true;                            
+                            if(fullpackage.Label3.DataType == JT1078DataType.VideoI)
                             {
-                                byte[] flvHeaderTag = encoder.EncoderFlvHeader(fullpackage);
-                                session.FlvHeader = flvHeaderTag;
+                                // iframe
+                                session.LastIFrame = fullpackage;
                             }
-                            var videoTag = encoder.EncoderVideoTag(fullpackage, false);
-                            session.LastFrame = videoTag;
                             session.Broadcast(videoTag);
                         }
                     }

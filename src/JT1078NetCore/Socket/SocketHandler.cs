@@ -1,6 +1,7 @@
 ﻿using DotNetty.Transport.Channels;
 using JT1078NetCore.Common;
 using JT1078NetCore.Utils;
+using System.Reflection.Emit;
 
 namespace JT1078NetCore.Socket
 {  
@@ -27,9 +28,16 @@ namespace JT1078NetCore.Socket
             try
             {
                 string channelId = context.Channel.Id.ToString();
-                IChannelHandlerContext tmp;
-                IChannel channel;
-                Global.DictChannels.TryRemove(channelId, out channel);
+                
+                SocketSession session;
+                if (Global.SESSIONS_CHANNEL.TryRemove(channelId, out session))
+                {
+                    if(session.ChannelId == channelId)
+                    {
+                        session.Destroy();
+                    }
+                }
+                Global.DictChannels.TryRemove(channelId, out _);
             }
             catch (Exception ex)
             {

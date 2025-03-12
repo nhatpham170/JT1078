@@ -18,7 +18,7 @@ namespace JT1078NetCore.Http
         {
 
         }
-        public  async Task Init()
+        public  async Task Init(int port)
         {
             Console.WriteLine(
                 $"\n{RuntimeInformation.OSArchitecture} {RuntimeInformation.OSDescription}"
@@ -91,7 +91,7 @@ namespace JT1078NetCore.Http
                         pipeline.AddLast(new WebSocketServerHandler());
                     }));
 
-                int port = ServerSettings.Port;
+                //int port = ServerSettings.Port;
                 IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);
 
                 Console.WriteLine("Open your web browser and navigate to "

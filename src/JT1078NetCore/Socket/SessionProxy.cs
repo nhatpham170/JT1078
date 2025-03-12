@@ -7,8 +7,9 @@ using WebSocketSharp.Server;
 
 namespace JT1078NetCore.Socket
 {
-    public class SessionProxy: WebSocketBehavior
+    public class SessionProxy : WebSocketBehavior
     {
+        public bool isValid = true;
         public string Token { get; set; }
         public string Key { get; set; }
         public long InitAt { get; set; }
@@ -17,6 +18,7 @@ namespace JT1078NetCore.Socket
         public long ReplyAt { get; set; }
         public long DestroyAt { get; set; }
         public string ChannelId { get; set; }
+        public string Path { get; set; }
         public MediaDefine.SessionStatus Status { get; set; }
         //private IChannelHandlerContext _channel { get; set; }
         public SessionProxy()
@@ -69,47 +71,65 @@ namespace JT1078NetCore.Socket
         }
         public void SendMsg(byte[] data)
         {
+            SentAt = DateUtil.Unix;
             Send(data);
         }
-        protected override void OnClose(CloseEventArgs e)
+
+
+        protected override void OnOpen()
         {
-            DestroyAt = DateUtil.Unix;
+            StartAt = DateUtil.Unix;
+            string[] arr = Context.RequestUri.LocalPath.Split('/');
+            string path = arr[arr.Length - 1];
+            Token = path.Substring(path.Length - 32);
+            Key = arr[arr.Length - 2] + "_" + path.Substring(0, path.Length - 33);
             Status = MediaDefine.SessionStatus.Subscribe;
+            SentAt = 0;
+            Path = Context.RequestUri.LocalPath;
+            // check used
+            SessionProxy old;
+            if (Global.SESSIONS_PROXY.TryGetValue(Token, out old))
+            {
+                if (old.StartAt > 0)
+                {
+                    // block token                    
+                    isValid = false;
+                    Block(Path);
+                    return;
+                }
+            }
             SocketSession socketSession;
             if (Global.SESSIONS_MAIN.TryGetValue(Key, out socketSession))
             {
-                socketSession.RemoveSubscribe(Token);
-            }
-        }        
-        //public void Writes(byte[] data)
-        //{
-        //    Send(data);
-        //}
-        protected override void OnOpen()
-        {
-            string name = this.Protocol;
-            StartAt = DateUtil.Unix;
-            string [] arr = this.Context.RequestUri.LocalPath.Split('/');
-            string path = arr[arr.Length - 1];
-            Token = path.Substring(path.Length - 32);
-            Key = arr[arr.Length-2] + "_" + path.Substring(0, path.Length - 33);
-            Status = MediaDefine.SessionStatus.Subscribe;
-            SentAt = 0;
-            //ChannelId = Channel.Channel.Id.ToString();
-            //Global.CHANNEL_PROXY[ChannelId] = Token;
-            //Update();
-            //_name = getName();
-
-            //var fmt = "{0} has logged in!";
-            //var msg = String.Format(fmt, _name);                
-            //Sessions.Broadcast(msg);
-            //byte[] demo = Encoding.UTF8.GetBytes("FLV");
-            //this.Send(demo);
-            SocketSession socketSession;
-            if(Global.SESSIONS_MAIN.TryGetValue(Key, out socketSession))
-            {
                 socketSession.AddSubscribe(this);
             }
+        }
+        private void Block(string path)
+        {
+            try
+            {
+                Log.WriteFeatureLog($"[BLOCK] token: {Token}, session: {Key}; token used ", "proxy");
+                Global.WsServer.RemoveWebSocketService(path);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+        }
+
+        protected override void OnClose(CloseEventArgs e)
+        {
+            if (isValid)
+            {
+                DestroyAt = DateUtil.Unix;
+                Status = MediaDefine.SessionStatus.Destroy;
+                SocketSession socketSession;
+                if (Global.SESSIONS_MAIN.TryGetValue(Key, out socketSession))
+                {
+                    socketSession.RemoveSubscribe(Token);
+                }
+            }
+
         }
         protected override void OnMessage(MessageEventArgs e)
         {
@@ -119,25 +139,41 @@ namespace JT1078NetCore.Socket
             //Sessions.Broadcast(msg);
         }
         public void Close()
-        {            
-            DestroyAt = DateUtil.Unix;
-            Status = MediaDefine.SessionStatus.Subscribe;
-            //if (_channel == null)
-            //{
-            //    _ = _channel.CloseAsync();
-            //}
-            Global.SESSIONS_PROXY.TryRemove(Token, out _);
-            Global.CHANNEL_PROXY.TryRemove(ChannelId, out _);
-            // update session main
-            SocketSession socketSession;
-            if(Global.SESSIONS_MAIN.TryGetValue(Key, out socketSession))
+        {
+            if (isValid)
             {
-                socketSession.RemoveSubscribe(Token);
+                DestroyAt = DateUtil.Unix;
+                Status = MediaDefine.SessionStatus.Subscribe;
+                //if (_channel == null)
+                //{
+                //    _ = _channel.CloseAsync();
+                //}
+                Global.SESSIONS_PROXY.TryRemove(Token, out _);
+                Global.CHANNEL_PROXY.TryRemove(ChannelId, out _);
+                // update session main
+                SocketSession socketSession;
+                if (Global.SESSIONS_MAIN.TryGetValue(Key, out socketSession))
+                {
+                    socketSession.RemoveSubscribe(Token);
+                }
             }
         }
         private void Update()
         {
             Global.SESSIONS_PROXY[Token] = this;
+        }
+
+        public void Destroy()
+        {
+            try
+            {
+                Global.WsServer.RemoveWebSocketService(Path);
+                Global.SESSIONS_PROXY.TryRemove(Token, out _);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
         }
     }
 }

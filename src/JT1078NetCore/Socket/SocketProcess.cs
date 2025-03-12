@@ -29,7 +29,8 @@ namespace JT1078NetCore.Socket
                             sessionMain.Start(context);                            
                             sessionMain.Protocol = session.Protocol;
                             session = sessionMain;
-                            Global.SESSIONS_MAIN[sessionMain.Key] = session;                         
+                            Global.SESSIONS_MAIN[sessionMain.Key] = session;
+                            Global.SESSIONS_CHANNEL[channelId] = session;
                         }
                         else
                         {

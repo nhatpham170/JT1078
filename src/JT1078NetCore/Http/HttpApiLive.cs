@@ -14,20 +14,17 @@ namespace JT1078NetCore.Http
     {
         public HttpApiLive() { }
         public HttpApiLive(string url) { }
-        public const string TYPE = MediaDefine.PlayType.Live;
-        public static string Protocol()
-        {
-            return "http://localhost:5001/live";
-        }
+        public const string TYPE = MediaDefine.PlayType.Live;  
         public static string ProtocolWs()
         {
-            return "ws://localhost:5001/live";
+            return $"ws://{Global.WsHost}:{Global.WsPort}/live";
         }
         public struct LiveResponse
         {
             public string token { get; set; }
             public int status { get; set; }
-            public string link { get; set; }            
+            public string link { get; set; }
+            public bool isReady { get; set; }
             //public string linkWs { get; set; }
         }
 
@@ -41,7 +38,7 @@ namespace JT1078NetCore.Http
                 string imei = queryParmas.Get("imei").ToString().ToLower();
                 string ch = queryParmas.Get("ch").ToString().ToLower();
                 string streamType = queryParmas.Get("streamType").ToString().ToLower();
-                string path = arr[0];                
+                string path = arr[0];
                 LiveResponse response = new LiveResponse();
                 response.token = SocketSession.NewToken();
                 response.status = 1;
@@ -57,23 +54,29 @@ namespace JT1078NetCore.Http
                 SocketSession sessionOrigin;
                 if (!Global.SESSIONS_MAIN.TryGetValue(session.Key, out sessionOrigin))
                 {
+                    // new channel
                     sessionOrigin = session;
-                }                
-                Global.SESSIONS_MAIN[sessionOrigin.Key] = sessionOrigin;
+                    sessionOrigin.InitSession();
+                    Global.SESSIONS_MAIN[sessionOrigin.Key] = sessionOrigin;
+                }
+                if (sessionOrigin.IsConnected)
+                {
+                    response.isReady = true;
+                }
                 // add proxy
                 //SessionProxy sessionProxy = new SessionProxy(response.token);
                 //sessionProxy.Key = key;
-                //Global.SESSIONS_PROXY[response.token] = sessionProxy;
+                //Global.SESSIONS_PROXY_WS[response.token] = pathProxy;
                 Global.WsServer.AddWebSocketService<SessionProxy>(pathProxy);
                 // add proxy
                 Reponse(ctx, req, response);
             }
             catch (Exception ex)
             {
-                LiveResponse response = new LiveResponse();                
+                LiveResponse response = new LiveResponse();
                 response.token = string.Empty;
                 response.status = 0;
-                response.link =string.Empty;
+                response.link = string.Empty;
                 Reponse(ctx, req, response);
                 ExceptionHandler.ExceptionProcess(ex);
             }
@@ -85,11 +88,11 @@ namespace JT1078NetCore.Http
                 IByteBuffer content = Unpooled.WrappedBuffer(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(dataResponse)));
                 var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, content);
                 res.Headers.Set(HttpHeaderNames.ContentType, "application/json; charset=UTF-8");
-                
+
                 res.Headers.Set(HttpHeaderNames.AccessControlAllowCredentials, "true");
                 res.Headers.Set(HttpHeaderNames.AccessControlAllowHeaders, "X-Requested-With, Content-Type, Authorization, Gps.App.Version, Origin, Accept, Access-Control-Request-Method, Access-Control-Request-Headers");
                 res.Headers.Set(HttpHeaderNames.AccessControlAllowMethods, "POST, GET, PUT, DELETE");
-                res.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");                
+                res.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
 
                 HttpUtil.SetContentLength(res, content.ReadableBytes);
                 HttpUtils.SendHttpResponse(ctx, req, res);

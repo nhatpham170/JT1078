@@ -5,7 +5,7 @@ namespace JT1078NetCore.Utils
     public class Log
     {
         //public static readonly string LogPathStr = ConfigurationManager.AppSettings["LogPath"];
-        public static readonly string LogPathStr = "E:/demo/";
+        public static string LogPathStr = "C:/Logs/";
         public static void WriteExceptionLog(string context)
         {
             string path = LogPath() + DateTime.Now.ToString("yyyyMMdd") + "\\ExceptionLog.txt";
@@ -119,8 +119,7 @@ namespace JT1078NetCore.Utils
 
         public static string LogPath()
         {
-            //return string.IsNullOrEmpty(LogPathStr) ? Application.StartupPath : LogPathStr;
-            return "E:/demo";
+            return string.IsNullOrEmpty(LogPathStr) ? "C:/Logs/MediaServer/" : LogPathStr;            
         }
     }
 }

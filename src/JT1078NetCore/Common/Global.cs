@@ -24,7 +24,14 @@ namespace JT1078NetCore.Common
         public static uint UDP_TIME = 0;
         public static ulong LastTime = 0;
         public static Http.WsService.WsSession Ws;
-        
+
+        public static string LogPath;
+        public static int TCPPort;
+        public static string APIHost;
+        public static int APIPort;
+        public static string WsHost;
+        public static int WsPort;
+
         public static string QueueLive;
         public static WebSocketSharp.Server.WebSocketServer WsServer;
         public static ConcurrentDictionary<string, IChannel> DictChannels = new ConcurrentDictionary<string, IChannel>();
@@ -37,6 +44,7 @@ namespace JT1078NetCore.Common
         public static ConcurrentDictionary<string, SocketSession> SESSIONS_CHANNEL = new ConcurrentDictionary<string, SocketSession>();        
         public static ConcurrentDictionary<string, SocketSession> SESSIONS_MAIN = new ConcurrentDictionary<string, SocketSession>();        
         public static ConcurrentDictionary<string, SessionProxy> SESSIONS_PROXY = new ConcurrentDictionary<string, SessionProxy>();        
+        //public static ConcurrentDictionary<string, string> SESSIONS_PROXY_WS = new ConcurrentDictionary<string, string>();        
         public static ConcurrentDictionary<string, string> CHANNEL_PROXY = new ConcurrentDictionary<string, string>();        
     }
 }
