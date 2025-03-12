@@ -45,14 +45,26 @@ namespace JT1078NetCore.Protocol.JT1078
                             //    //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
                             //    //Global.Ws.LastTime = timeNow;
                             //}
-                            var videoTag = encoder.EncoderVideoTag(fullpackage, !session.HasFlvHeader);
-                            session.HasFlvHeader = true;                            
-                            if(fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                            if (!session.HasFlvHeader)
                             {
-                                // iframe
-                                session.LastIFrame = fullpackage;
+                                if(fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                                {
+                                    session.HasFlvHeader = true;
+                                    var videoTag = encoder.EncoderVideoTag(fullpackage, true);                                    
+                                    session.LastIFrame = fullpackage;
+                                    session.Broadcast(videoTag);
+                                }                             
                             }
-                            session.Broadcast(videoTag);
+                            else
+                            {
+                                var videoTag = encoder.EncoderVideoTag(fullpackage, false);                                
+                                if (fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                                {
+                                    // iframe
+                                    session.LastIFrame = fullpackage;
+                                }
+                                session.Broadcast(videoTag);
+                            }                                                  
                         }
                     }
                 }

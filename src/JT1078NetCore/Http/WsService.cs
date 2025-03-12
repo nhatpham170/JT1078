@@ -49,8 +49,8 @@ namespace JT1078NetCore.Http
             }
         }
         public void Init(int port)
-        {
-            Global.WsServer = new WebSocketSharp.Server.WebSocketServer(port);
+        {   
+            Global.WsServer = new WebSocketSharp.Server.WebSocketServer(port);            
             Global.WsServer.Start();
         }
     }

@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Http;
 using System.Web;
 using JT1078NetCore.Common;
 using Newtonsoft.Json;
+using Microsoft.VisualBasic;
+using System.Text;
 
 namespace JT1078ServerWF
 {
@@ -49,7 +51,6 @@ namespace JT1078ServerWF
         {
             try
             {
-
                 System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
                 timer.Interval = 5000;
                 timer.Tick += EventMonitor;
@@ -70,8 +71,7 @@ namespace JT1078ServerWF
         private void EventMonitor(object? sender, EventArgs e)
         {
             try
-            {
-                Log.WriteFeatureLog("INIT", LOG_MONITOR);
+            {                
                 MonitorObj obj = new MonitorObj();
                 obj.Connection = Global.DictChannels.Count;
                 obj.Session = Global.SESSIONS_MAIN.Count;
@@ -98,39 +98,49 @@ namespace JT1078ServerWF
 
         private async void button1_Click(object sender, EventArgs e)
         {
-            LoadConfig();
-            Log.WriteDeviceLog("213213", "demo");
-            var bossGroup = new MultithreadEventLoopGroup();
-            var workerGroup = new MultithreadEventLoopGroup();
-            bootstrap = new ServerBootstrap();
-            bootstrap
-                .Group(bossGroup)
-                .Channel<TcpServerSocketChannel>()
-                //.Option(ChannelOption.SoBacklog, 8192)// 1024
-                .Option(ChannelOption.SoRcvbuf, 0x8340000) // 4,194,304 // 65536 // 32768 // 846750
-                .Option(ChannelOption.SoSndbuf, 0x8340000)
-                .Option(ChannelOption.TcpNodelay, true)
-                  //.Option(ChannelOption.AutoRead, true)
-                  //.Option(ChannelOption.Allocator, PooledByteBufferAllocator.Default)
-                  //.Option(ChannelOption.WriteBufferHighWaterMark, 1048576)              
-                  //.Option(ChannelOption.SoSndbuf, 102400)
-                  //.Option(ChannelOption.SoRcvbuf, 102400)                    
-                  //.Handler(new LoggingHandler(LogLevel.INFO))
-                  // howen
-                  .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
-                  {
-                      IChannelPipeline pipeline = channel.Pipeline;
-                      channel.Pipeline.AddLast("encoder", new ByteEncoder());
-                      channel.Pipeline.AddLast("hexDecoder", new HexDecoder());
-                      channel.Pipeline.AddLast("dataFilter", new SocketProcess());
-                      channel.Pipeline.AddLast(new StringDecoder(), new SocketHandler());
-                  }));
-            new WsService().Init(Global.WsPort);
-            bootstrapChannel = await bootstrap.BindAsync(Global.TCPPort);
-            JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
-            await webSocketServer.Init(Global.APIPort);
-            this.status = true;
-            btnStart.BackColor = Color.GreenYellow;
+            try
+            {
+                LoadConfig();
+                //Log.WriteDeviceLog("213213", "demo");
+                var bossGroup = new MultithreadEventLoopGroup();
+                var workerGroup = new MultithreadEventLoopGroup();
+                bootstrap = new ServerBootstrap();
+                bootstrap
+                    .Group(bossGroup)
+                    .Channel<TcpServerSocketChannel>()
+                    //.Option(ChannelOption.SoBacklog, 8192)// 1024
+                    .Option(ChannelOption.SoRcvbuf, 0x8340000) // 4,194,304 // 65536 // 32768 // 846750
+                    .Option(ChannelOption.SoSndbuf, 0x8340000)
+                    .Option(ChannelOption.TcpNodelay, true)
+                      //.Option(ChannelOption.AutoRead, true)
+                      //.Option(ChannelOption.Allocator, PooledByteBufferAllocator.Default)
+                      //.Option(ChannelOption.WriteBufferHighWaterMark, 1048576)              
+                      //.Option(ChannelOption.SoSndbuf, 102400)
+                      //.Option(ChannelOption.SoRcvbuf, 102400)                    
+                      //.Handler(new LoggingHandler(LogLevel.INFO))
+                      // howen
+                      .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+                      {
+                          IChannelPipeline pipeline = channel.Pipeline;
+                          channel.Pipeline.AddLast("encoder", new ByteEncoder());
+                          channel.Pipeline.AddLast("hexDecoder", new HexDecoder());
+                          channel.Pipeline.AddLast("dataFilter", new SocketProcess());
+                          channel.Pipeline.AddLast(new StringDecoder(), new SocketHandler());
+                      }));
+                new WsService().Init(Global.WsPort);
+                bootstrapChannel = await bootstrap.BindAsync(Global.TCPPort);
+                JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
+                await webSocketServer.Init(Global.APIPort);
+                this.status = true;
+                btnStart.BackColor = Color.GreenYellow;
+                Monitor();
+                Log.WriteStatusLog("Start service");
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+           
         }
         private async Task InitHTTP()
         {
@@ -140,35 +150,40 @@ namespace JT1078ServerWF
         private void btnHttpInit_Click(object sender, EventArgs e)
         {
             _ = InitHTTP();
-            //HttpServer httpServer = new HttpServer(5002);
-            //httpServer.OnGet += (sender, e) =>
-            //{
-            //    var req = e.Request;
-            //    var res = e.Response;
-            //    var path = req.RawUrl;
-            //    try
-            //    {
-            //       if(path.StartsWith("/api/live"))
-            //        {
-            //            // add proxy
-            //            Uri myUri = new Uri("http://www.example.com?param1=good&param2=bad");
-            //            var paramQuery = HttpUtility.ParseQueryString(path);
-            //            string app = paramQuery.Get("app").ToString();
-            //            string imei = paramQuery.Get("imei").ToString();
-            //            string ch = paramQuery.Get("ch").ToString();        
-            //            string token = Guid.NewGuid().ToString();
-            //        }
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        res.Close();
-            //        ExceptionHandler.ExceptionProcess(ex);
-            //    }             
+            HttpServer httpServer = new HttpServer(2202);
+            httpServer.OnGet += (sender, e) =>
+            {
+                var req = e.Request;
+                var res = e.Response;
+                var path = req.RawUrl;
+                try
+                {
+                    if (path.StartsWith("/api/live"))
+                    {
+                        // add proxy
+                        //Uri myUri = new Uri("http://www.example.com?param1=good&param2=bad");
+                        //var paramQuery = HttpUtility.ParseQueryString(path);
+                        //string app = paramQuery.Get("app").ToString();
+                        //string imei = paramQuery.Get("imei").ToString();
+                        //string ch = paramQuery.Get("ch").ToString();
+                        //string token = Guid.NewGuid().ToString();                        
+                        //byte[] contents  = Encoding.UTF8.GetBytes("xin chào");
+                        //res.ContentLength64 = contents.LongLength;
 
-            //};
-            ////httpServer.AddWebSocketService<WsSession>("/live2");
-            ////httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
-            //httpServer.Start();
+                        //res.Close(contents, true);
+                        HttpApiLive.ProcessWS(req, res);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    res.Close();
+                    ExceptionHandler.ExceptionProcess(ex);
+                }
+
+            };
+            //httpServer.AddWebSocketService<WsSession>("/live2");
+            //httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
+            httpServer.Start();
         }
 
         private void Form1_Load(object sender, EventArgs e)

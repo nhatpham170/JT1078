@@ -111,8 +111,7 @@ namespace JT1078NetCore.Socket
                     {
                         // timeout
                         Log.WriteFeatureLog($"[TIMEOUT]: session: {Key}, Not player", TYPE_LOG);
-                        Stop();
-                        return;
+                        Stop();                        
                     }
                 }
                 else { _startTimeout = 0; }
@@ -128,8 +127,7 @@ namespace JT1078NetCore.Socket
         public void Broadcast(byte[] data)
         {
             try
-            {
-                CheckTimeout();
+            {                
                 // push data
                 foreach (var proxy in Subscribers.Values)
                 {
