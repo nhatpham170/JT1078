@@ -1,4 +1,4 @@
-using DotNetty.Transport.Bootstrapping;
+﻿using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels.Sockets;
 using DotNetty.Transport.Channels;
 using JT1078NetCore.Http;
@@ -15,6 +15,10 @@ using System.Threading.Tasks;
 using JT1078NetCore.Utils;
 using Microsoft.AspNetCore.Http;
 using System.Web;
+using DotNetty.Buffers;
+using DotNetty.Codecs.Http.Cors;
+using DotNetty.Codecs.Http;
+using JT1078NetCore.Common;
 
 namespace JT1078ServerWF
 {
@@ -63,7 +67,134 @@ namespace JT1078ServerWF
         }
         private async Task InitHTTP()
         {
-          
+           _ = new HttpFlvServer().StartAsync(8080);
+        }
+
+        public class HttpFlvServer
+        {
+            private IEventLoopGroup bossGroup;
+            private IEventLoopGroup workerGroup;
+
+            public async Task StartAsync(int port)
+            {
+                bossGroup = new MultithreadEventLoopGroup(1);
+                workerGroup = new MultithreadEventLoopGroup();
+
+                try
+                {
+                    var bootstrap = new ServerBootstrap();
+                    bootstrap.Group(bossGroup, workerGroup);
+                    bootstrap.Channel<TcpServerSocketChannel>();
+                    bootstrap.Option(ChannelOption.SoBacklog, 100);
+                    bootstrap.ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+                    {
+                        IChannelPipeline pipeline = channel.Pipeline;
+
+                        // HTTP codec
+                        pipeline.AddLast(new HttpServerCodec());
+                        pipeline.AddLast(new HttpObjectAggregator(65536));
+
+                        // Thêm CORS header nếu cần
+                        //pipeline.AddLast(new CorsHandler());
+
+                        // Handler xử lý HTTP request để trả về FLV stream
+                        pipeline.AddLast(new HttpFlvStreamHandler());
+                    }));
+
+                    IChannel bootstrapChannel = await bootstrap.BindAsync(port);
+                    Console.WriteLine($"HTTP-FLV streaming server started on port {port}");
+                    while (true)
+                    {
+                        var flvHeader = Unpooled.Buffer(9);
+                        flvHeader.WriteBytes(new byte[] { 0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09 }); // FLV header
+                        if(Global.ctx != null)
+                        {
+                            await Global.ctx.WriteAndFlushAsync(flvHeader);
+                        }
+                        
+                        await Task.Delay(5000);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //Console.WriteLine($"Error starting server: {ex.Message}");
+                    //await ShutdownAsync();
+                }
+            }
+
+            // ...
+        }
+
+        // HTTP handler để phục vụ FLV stream
+        public class HttpFlvStreamHandler : SimpleChannelInboundHandler<IFullHttpRequest>
+        {
+            protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest request)
+            {
+                if (request.Uri.Contains("/flv"))
+                {
+                    // Thiết lập HTTP response
+                    var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
+                    response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
+                    response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                    response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
+                    response.Headers.Set(HttpHeaderNames.AccessControlAllowHeaders, "*");
+
+                    ctx.WriteAndFlushAsync(response);
+
+                    // Ghi FLV header
+                    var flvHeader = Unpooled.Buffer(9);
+                    flvHeader.WriteBytes(new byte[] { 0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09 }); // FLV header
+                    ctx.WriteAndFlushAsync(flvHeader);
+
+                    // Bắt đầu stream FLV từ nguồn của bạn
+                    StartStreamingFlv(ctx);
+                }
+                else if (request.Uri.Contains("/ws"))
+                {
+                    // Thiết lập HTTP response
+                    //var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
+                    //response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
+                    //response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                    //response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
+                    //response.Headers.Set(HttpHeaderNames.AccessControlAllowHeaders, "*");
+
+                    //ctx.WriteAndFlushAsync(response);
+
+                    // Ghi FLV header
+                    var flvHeader = Unpooled.Buffer(9);
+                    flvHeader.WriteBytes(new byte[] { 0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09 }); // FLV header
+                    ctx.WriteAndFlushAsync(flvHeader);
+
+                    // Bắt đầu stream FLV từ nguồn của bạn
+                    StartStreamingFlv(ctx);
+                }
+                else
+                {
+                    // Xử lý các endpoints khác nếu cần
+                    ctx.WriteAndFlushAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.NotFound));
+                }
+            }
+
+            private void StartStreamingFlv(IChannelHandlerContext ctx)
+            {
+                Global.ctx = ctx;
+                // Triển khai logic để lấy dữ liệu FLV từ nguồn và gửi nó cho client
+                // Đây có thể là một tệp FLV, một stream từ camera, hoặc bất kỳ nguồn nào khác
+
+                // Ví dụ đơn giản: gửi dữ liệu FLV từ tệp
+                // Task.Run(async () => {
+                //    using (var fileStream = File.OpenRead("path/to/your/video.flv"))
+                //    {
+                //        var buffer = new byte[4096];
+                //        int bytesRead;
+                //        while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                //        {
+                //            var flvBuffer = Unpooled.WrappedBuffer(buffer, 0, bytesRead);
+                //            await ctx.WriteAndFlushAsync(flvBuffer);
+                //        }
+                //    }
+                // });
+            }
         }
         //private async void InitHTTP()
         //{

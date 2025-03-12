@@ -26,7 +26,7 @@ namespace JT1078NetCore.Common
         public static Http.WsService.WsSession Ws;
         
         public static string QueueLive;
-
+        public static IChannelHandlerContext ctx;
         public static ConcurrentDictionary<string, IChannel> DictChannels = new ConcurrentDictionary<string, IChannel>();
         public static ConcurrentDictionary<string, string> DictBuffer = new ConcurrentDictionary<string, string>();        
         public static ConcurrentDictionary<string, string> DictStream = new ConcurrentDictionary<string, string>();        
