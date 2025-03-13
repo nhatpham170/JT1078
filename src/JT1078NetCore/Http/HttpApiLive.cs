@@ -152,6 +152,37 @@ namespace JT1078NetCore.Http
                 ExceptionHandler.ExceptionProcess(ex);
             }
         }
+        public static void Close(IChannelHandlerContext ctx, IFullHttpRequest req)
+        {
+            try
+            {
+                // parser
+                string[] arr = req.Uri.Split('?');
+                string path = arr[0];                
+                var queryParmas = HttpUtility.ParseQueryString(arr.Length > 1 ? arr[1] : "");
+                string token = queryParmas.Get("token").ToString().ToLower();
+                LiveResponse response = new LiveResponse();
+                response.token = token;
+                response.status = 1;
+                response.link = string.Empty;
+                SessionProxy sessionProxy;
+                if(Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
+                {
+                    sessionProxy.Destroy();
+                }
+
+                Reponse(ctx, req, response);
+            }
+            catch (Exception ex)
+            {
+                LiveResponse response = new LiveResponse();
+                response.token = string.Empty;
+                response.status = 0;
+                response.link = string.Empty;
+                Reponse(ctx, req, response);
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+        }
         private static void Reponse(IChannelHandlerContext ctx, IFullHttpRequest req, LiveResponse dataResponse)
         {
             try

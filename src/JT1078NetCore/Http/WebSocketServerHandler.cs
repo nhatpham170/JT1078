@@ -89,6 +89,9 @@ namespace JT1078NetCore.Http
                 case "/api/live":
                     HttpApiLive.Process(ctx, req);
                     return;
+                case "/api/close":
+                    HttpApiLive.Close(ctx, req);
+                    return;
                 case "/api/playback":
 
                     break;
