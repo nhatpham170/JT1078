@@ -18,7 +18,13 @@ namespace JT1078NetCore.Http
         public const string TYPE = MediaDefine.PlayType.Live;  
         public static string ProtocolWs()
         {
-            return $"ws://{Global.WsHost}:{Global.WsPort}/live";
+            if (Global.IsSsl)
+            {
+                return $"wss://{Global.WsHost}/live";
+            }else
+            {
+                return $"ws://{Global.WsHost}:{Global.WsPort}/live";
+            }            
         }
         public struct LiveResponse
         {

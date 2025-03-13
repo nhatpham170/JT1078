@@ -31,6 +31,7 @@ namespace JT1078NetCore.Common
         public static int APIPort;
         public static string WsHost;
         public static int WsPort;
+        public static bool IsSsl;
 
         public static string QueueLive;
         public static WebSocketSharp.Server.WebSocketServer WsServer;

@@ -40,6 +40,7 @@
             label4 = new Label();
             txtLogPath = new TextBox();
             label5 = new Label();
+            ckbSsl = new CheckBox();
             SuspendLayout();
             // 
             // btnStart
@@ -160,11 +161,23 @@
             label5.TabIndex = 10;
             label5.Text = "Log Path";
             // 
+            // ckbSsl
+            // 
+            ckbSsl.AutoSize = true;
+            ckbSsl.Font = new Font("Times New Roman", 12.75F, FontStyle.Regular, GraphicsUnit.Point);
+            ckbSsl.Location = new Point(85, 179);
+            ckbSsl.Name = "ckbSsl";
+            ckbSsl.Size = new Size(56, 23);
+            ckbSsl.TabIndex = 12;
+            ckbSsl.Text = "SSL";
+            ckbSsl.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(ckbSsl);
             Controls.Add(txtLogPath);
             Controls.Add(label5);
             Controls.Add(txtPortAPI);
@@ -198,5 +211,6 @@
         private Label label4;
         private TextBox txtLogPath;
         private Label label5;
+        private CheckBox ckbSsl;
     }
 }

@@ -42,6 +42,7 @@ namespace JT1078ServerWF
 
             JT1078NetCore.Common.Global.WsPort = int.Parse(txtPortWs.Text);
             JT1078NetCore.Common.Global.WsHost = txtHostAPI.Text;
+            JT1078NetCore.Common.Global.IsSsl = ckbSsl.Checked;
 
             JT1078NetCore.Common.Global.LogPath = txtLogPath.Text;
             Log.LogPathStr = JT1078NetCore.Common.Global.LogPath;

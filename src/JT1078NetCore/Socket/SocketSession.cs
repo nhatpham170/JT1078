@@ -111,7 +111,7 @@ namespace JT1078NetCore.Socket
                     {
                         // timeout
                         Log.WriteFeatureLog($"[TIMEOUT]: session: {Key}, Not player", TYPE_LOG);
-                        Stop();                        
+                        Stop();
                     }
                 }
                 else { _startTimeout = 0; }
@@ -121,6 +121,7 @@ namespace JT1078NetCore.Socket
                 if (DateUtil.Unix - _initAt > 15)
                 {
                     Log.WriteFeatureLog($"[TIMEOUT]: session: {Key}, Device not connect", TYPE_LOG);
+                    Destroy();
                 }
             }
         }
