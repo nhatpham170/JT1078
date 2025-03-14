@@ -132,6 +132,10 @@ namespace JT1078ServerWF
                 bootstrapChannel = await bootstrap.BindAsync(Global.TCPPort);
                 JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
                 await webSocketServer.Init(Global.APIPort);
+
+                JT1078NetCore.Http.HttpServer FlvHttpServer = new JT1078NetCore.Http.HttpServer();
+                Global.HttpFlvPort = 8802;
+                await FlvHttpServer.Init(Global.HttpFlvPort);
                 this.status = true;
                 btnStart.BackColor = Color.GreenYellow;
                 Monitor();
@@ -151,40 +155,40 @@ namespace JT1078ServerWF
         private void btnHttpInit_Click(object sender, EventArgs e)
         {
             _ = InitHTTP();
-            HttpServer httpServer = new HttpServer(2202);
-            httpServer.OnGet += (sender, e) =>
-            {
-                var req = e.Request;
-                var res = e.Response;
-                var path = req.RawUrl;
-                try
-                {
-                    if (path.StartsWith("/api/live"))
-                    {
-                        // add proxy
-                        //Uri myUri = new Uri("http://www.example.com?param1=good&param2=bad");
-                        //var paramQuery = HttpUtility.ParseQueryString(path);
-                        //string app = paramQuery.Get("app").ToString();
-                        //string imei = paramQuery.Get("imei").ToString();
-                        //string ch = paramQuery.Get("ch").ToString();
-                        //string token = Guid.NewGuid().ToString();                        
-                        //byte[] contents  = Encoding.UTF8.GetBytes("xin chào");
-                        //res.ContentLength64 = contents.LongLength;
+            //HttpServer httpServer = new HttpServer(2202);
+            //httpServer.OnGet += (sender, e) =>
+            //{
+            //    var req = e.Request;
+            //    var res = e.Response;
+            //    var path = req.RawUrl;
+            //    try
+            //    {
+            //        if (path.StartsWith("/api/live"))
+            //        {
+            //            // add proxy
+            //            //Uri myUri = new Uri("http://www.example.com?param1=good&param2=bad");
+            //            //var paramQuery = HttpUtility.ParseQueryString(path);
+            //            //string app = paramQuery.Get("app").ToString();
+            //            //string imei = paramQuery.Get("imei").ToString();
+            //            //string ch = paramQuery.Get("ch").ToString();
+            //            //string token = Guid.NewGuid().ToString();                        
+            //            //byte[] contents  = Encoding.UTF8.GetBytes("xin chào");
+            //            //res.ContentLength64 = contents.LongLength;
 
-                        //res.Close(contents, true);
-                        HttpApiLive.ProcessWS(req, res);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    res.Close();
-                    ExceptionHandler.ExceptionProcess(ex);
-                }
+            //            //res.Close(contents, true);
+            //            HttpApiLive.ProcessWS(req, res);
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        res.Close();
+            //        ExceptionHandler.ExceptionProcess(ex);
+            //    }
 
-            };
-            //httpServer.AddWebSocketService<WsSession>("/live2");
-            //httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
-            httpServer.Start();
+            //};
+            ////httpServer.AddWebSocketService<WsSession>("/live2");
+            ////httpServer.AddWebSocketService<WsSession>("/ChatWithNyan");
+            //httpServer.Start();
         }
 
         private void Form1_Load(object sender, EventArgs e)

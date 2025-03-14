@@ -64,7 +64,7 @@ namespace JT1078NetCore.Http
                     SessionProxy sessionProxy;
                     if(Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy)){
                         sessionProxy.Close();
-                    }
+                    }                    
                 }
             }
             catch (Exception ex)
@@ -98,95 +98,7 @@ namespace JT1078NetCore.Http
                 default:
                     break;
             }
-            if (path.StartsWith("/live/"))
-            {
-                //req.Headers.Set(HttpHeaderNames.SecWebsocketKey, "MwQH7qrBwthWi9keBJueTg==");
-                // is websocket 
-                string token = path.Substring(path.Length - 32);
-                SessionProxy sessionProxy;
-                if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy) || true)
-                {
-                    var wsF = new WebSocketServerHandshakerFactory(
-                    GetWebSocketLocation(req), null, true, 5 * 1024 * 1024, true);
-                    //var response = new DefaultFullHttpResponse(
-                    //      HttpVersion.Http11,
-                    //      HttpResponseStatus.SwitchingProtocols
-                    //  );
-                    //ctx.WriteAndFlushAsync(response);
-                    handshaker = wsF.NewHandshaker(req);
-                    if (handshaker == null)
-                    {
-                        WebSocketServerHandshakerFactory.SendUnsupportedVersionResponse(ctx.Channel);
-                    }
-                    else
-                    {
-                        handshaker.HandshakeAsync(ctx.Channel, req, null);                         
-                    }
-                    //sessionProxy.Subscribe(ctx);
-                    //ctx.WriteAsync(new byte[2] { 0x10, 0x11 });
-                    Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
-                }
-                else
-                {
-                    // token invalid
-                    ctx.Channel.CloseAsync();
-                }
-                return;
-            }            
-            
-            
-            // Handle a bad request.
-            if (!req.Result.IsSuccess)
-            {
-                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.BadRequest));
-                return;
-            }
-
-            // Allow only GET methods.
-            if (!Equals(req.Method, DotNetty.Codecs.Http.HttpMethod.Get))
-            {
-                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Forbidden));
-                return;
-            }
-
-            // Send the demo page and favicon.ico
-            if ("/".Equals(req.Uri))
-            {
-                //IByteBuffer content = WebSocketServerBenchmarkPage.GetContent(GetWebSocketLocation(req));
-                IByteBuffer content = Unpooled.WrappedBuffer(Encoding.ASCII.GetBytes("Xin chào"));
-                IByteBuffer content2 = Unpooled.WrappedBuffer(Encoding.ASCII.GetBytes("Xin chào 2"));
-                var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, content);
-
-                res.Headers.Set(HttpHeaderNames.ContentType, "text/html; charset=UTF-8");
-                HttpUtil.SetContentLength(res, content.ReadableBytes);
-
-                SendHttpResponse(ctx, req, res);
-                //HttpUtil.SetContentLength(res, content2.ReadableBytes);                
-                //ctx.Channel.WriteAndFlushAsync(res);
-                byte[] json = Encoding.UTF8.GetBytes(NewMessage().ToJsonFormat());
-                this.WriteResponse(ctx, Unpooled.WrappedBuffer(json), TypeJson, JsonClheaderValue);
-
-                return;
-            }
-            if ("/favicon.ico".Equals(req.Uri))
-            {
-                var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.NotFound);
-                SendHttpResponse(ctx, req, res);
-                return;
-            }
-
-            // Handshake
-            var wsFactory = new WebSocketServerHandshakerFactory(
-                GetWebSocketLocation(req), null, true, 5 * 1024 * 1024);
-            this.handshaker = wsFactory.NewHandshaker(req);
-            if (this.handshaker == null)
-            {
-                WebSocketServerHandshakerFactory.SendUnsupportedVersionResponse(ctx.Channel);
-            }
-            else
-            {
-                this.handshaker.HandshakeAsync(ctx.Channel, req);
-            }
+          
         }
 
         static readonly byte[] StaticPlaintext = Encoding.UTF8.GetBytes("Hello, World!");

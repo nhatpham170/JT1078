@@ -1,4 +1,5 @@
-﻿using DotNetty.Transport.Channels;
+﻿using DotNetty.Buffers;
+using DotNetty.Transport.Channels;
 using JT1078NetCore.Common;
 using JT1078NetCore.Utils;
 using System.Threading.Channels;
@@ -9,6 +10,7 @@ namespace JT1078NetCore.Socket
 {
     public class SessionProxy : WebSocketBehavior
     {
+        public MediaDefine.MediaType MediaType = MediaDefine.MediaType.WebSocketFlv;
         public bool isValid = true;
         public string Token { get; set; }
         public string Key { get; set; }
@@ -20,7 +22,7 @@ namespace JT1078NetCore.Socket
         public string ChannelId { get; set; }
         public string Path { get; set; }
         public MediaDefine.SessionStatus Status { get; set; }
-        //private IChannelHandlerContext _channel { get; set; }
+        private IChannelHandlerContext _channel { get; set; }
         public SessionProxy()
         {
             InitAt = DateUtil.Unix;
@@ -29,7 +31,15 @@ namespace JT1078NetCore.Socket
         {
             this.Token = token;
             InitAt = DateUtil.Unix;
+        }        
+        public virtual void SetSession(IChannelHandlerContext channel)
+        {
+            _channel = channel;
         }
+        //public virtual void SendMsg(byte[] data)
+        //{
+           
+        //}
         //public void Subscribe(IChannelHandlerContext Channel)
         //{
         //    if (_channel != null)
@@ -69,10 +79,18 @@ namespace JT1078NetCore.Socket
             ReplyAt = DateUtil.Unix;
             Update();
         }
-        public void SendMsg(byte[] data)
+        public virtual void SendMsg(byte[] data)
         {
             SentAt = DateUtil.Unix;
-            Send(data);
+            if (MediaType == MediaDefine.MediaType.HttpFlv)
+            {
+                var buffer = Unpooled.WrappedBuffer(data);
+                _channel.WriteAndFlushAsync(buffer);
+                //_channel.Channel.Flush();
+            }
+            else {
+                Send(data);
+            }
         }
 
 
@@ -86,6 +104,7 @@ namespace JT1078NetCore.Socket
             Status = MediaDefine.SessionStatus.Subscribe;
             SentAt = 0;
             Path = Context.RequestUri.LocalPath;
+            MediaType = MediaDefine.MediaType.WebSocketFlv;
             // check used
             SessionProxy old;
             if (Global.SESSIONS_PROXY.TryGetValue(Token, out old))
@@ -138,16 +157,16 @@ namespace JT1078NetCore.Socket
 
             //Sessions.Broadcast(msg);
         }
-        public void Close()
+        public virtual void Close()
         {
             if (isValid)
             {
                 DestroyAt = DateUtil.Unix;
                 Status = MediaDefine.SessionStatus.Subscribe;
-                //if (_channel == null)
-                //{
-                //    _ = _channel.CloseAsync();
-                //}
+                if (_channel != null)
+                {
+                    _ = _channel.CloseAsync();
+                }
                 Global.SESSIONS_PROXY.TryRemove(Token, out _);
                 Global.CHANNEL_PROXY.TryRemove(ChannelId, out _);
                 // update session main

@@ -13,9 +13,9 @@ using JT1078NetCore.Utils;
 
 namespace JT1078NetCore.Http
 {
-    public class WebSocketServer
+    public class HttpServer
     {
-        public WebSocketServer()
+        public HttpServer()
         {
 
         }
@@ -39,18 +39,19 @@ namespace JT1078NetCore.Http
             Log.WriteStatusLog("\n");
             IEventLoopGroup bossGroup;
             IEventLoopGroup workGroup;
-            if (useLibuv)
-            {
-                var dispatcher = new DispatcherEventLoopGroup();
-                bossGroup = dispatcher;
-                workGroup = new WorkerEventLoopGroup(dispatcher);
-            }
-            else
-            {
-                bossGroup = new MultithreadEventLoopGroup(1);
-                workGroup = new MultithreadEventLoopGroup();
-            }
-
+            //if (useLibuv)
+            //{
+            //    var dispatcher = new DispatcherEventLoopGroup();
+            //    bossGroup = dispatcher;
+            //    workGroup = new WorkerEventLoopGroup(dispatcher);
+            //}
+            //else
+            //{
+            //    bossGroup = new MultithreadEventLoopGroup(1);
+            //    workGroup = new MultithreadEventLoopGroup();
+            //}
+            bossGroup = new MultithreadEventLoopGroup(1);
+            workGroup = new MultithreadEventLoopGroup();
             X509Certificate2 tlsCertificate = null;
             //if (ServerSettings.IsSsl)
             //{
@@ -61,36 +62,42 @@ namespace JT1078NetCore.Http
                 var bootstrap = new ServerBootstrap();
                 bootstrap.Group(bossGroup, workGroup);
 
-                if (useLibuv)
-                {
-                    bootstrap.Channel<TcpServerChannel>();
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-                        || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    {
-                        bootstrap
-                            .Option(ChannelOption.SoReuseport, true)
-                            .ChildOption(ChannelOption.SoReuseaddr, true);
-                    }
-                }
-                else
-                {
-                    bootstrap.Channel<TcpServerSocketChannel>();
-                }
+                //if (useLibuv)
+                //{
+                //    bootstrap.Channel<TcpServerChannel>();
+                //    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                //        || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                //    {
+                //        bootstrap
+                //            .Option(ChannelOption.SoReuseport, true)
+                //            .ChildOption(ChannelOption.SoReuseaddr, true);
+                //    }
+                //}
+                //else
+                //{
+                //    bootstrap.Channel<TcpServerSocketChannel>();
+                //}
 
                 bootstrap
-                    .Option(ChannelOption.SoBacklog, 8192)
+                    .Channel<TcpServerSocketChannel>()
+                    .Option(ChannelOption.SoBacklog, 8192 * 1024)
+                    .Option(ChannelOption.SoReuseport, true)
+                    .Option(ChannelOption.TcpNodelay, true)
+                    .ChildOption(ChannelOption.SoReuseaddr, true)
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
+
                         IChannelPipeline pipeline = channel.Pipeline;
                         if (tlsCertificate != null)
                         {
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
-                        pipeline.AddLast(new HttpServerCodec());
+                        pipeline.AddLast(new HttpRequestDecoder());
+                        pipeline.AddLast(new HttpResponseEncoder());
                         pipeline.AddLast(new HttpObjectAggregator(65536));
                         // HTTP compression
                         pipeline.AddLast("compressor", new HttpContentCompressor());
-                        pipeline.AddLast(new WebSocketServerHandler());
+                        pipeline.AddLast(new HttpServerHandler());
                     }));
 
                 //int port = ServerSettings.Port;

@@ -29,6 +29,7 @@ namespace JT1078NetCore.Common
         public static int TCPPort;
         public static string APIHost;
         public static int APIPort;
+        public static int HttpFlvPort;
         public static string WsHost;
         public static int WsPort;
         public static bool IsSsl;
