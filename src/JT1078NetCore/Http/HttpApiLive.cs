@@ -135,7 +135,11 @@ namespace JT1078NetCore.Http
                 LiveResponse response = new LiveResponse();
                 response.token = SocketSession.NewToken();
                 response.status = 1;
-                response.link = $"{Protocol(mediaType)}/{imei}_{ch}_{streamType}_{response.token}.flv";
+                response.link = $"{Protocol(mediaType)}/{imei}_{ch}_{streamType}_{response.token}";
+                //if(mediaType == MediaDefine.MediaType.HttpFlv)
+                //{
+                //    response.link += ".flv";
+                //}
                 string pathProxy = $"/{TYPE}/{imei}_{ch}_{streamType}_{response.token}";
                 SocketSession session = new SocketSession();
                 session.PlayType = TYPE;

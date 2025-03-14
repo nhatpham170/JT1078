@@ -96,7 +96,7 @@ namespace JT1078NetCore.Http
                         pipeline.AddLast(new HttpResponseEncoder());
                         pipeline.AddLast(new HttpObjectAggregator(65536));
                         // HTTP compression
-                        pipeline.AddLast("compressor", new HttpContentCompressor());
+                        //pipeline.AddLast("compressor", new HttpContentCompressor());
                         pipeline.AddLast(new HttpServerHandler());
                     }));
 

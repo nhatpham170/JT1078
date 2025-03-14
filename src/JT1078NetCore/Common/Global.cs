@@ -1,4 +1,5 @@
 ﻿using DotNetty.Transport.Channels;
+using JT1078.Flv;
 using JT1078NetCore.Socket;
 using System.Collections.Concurrent;
 using System.Net;
@@ -7,6 +8,7 @@ namespace JT1078NetCore.Common
 {
     public class Global
     {
+        public static FlvEncoder encoder = new FlvEncoder();
         public static string HostForward = "";
         public static int PortForward = 0;
         public static string HostForward2 = "";

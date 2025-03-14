@@ -8,11 +8,12 @@ using JT1078NetCore.Socket;
 using JT1078.Protocol.Extensions;
 using JT1078.Flv;
 using System.IO;
+using JT1078.Flv.Metadata;
 
 namespace JT1078NetCore.Protocol.JT1078
-{   
+{       
     public class JT1078Filter
-    {
+    {          
         public void MsgProcess(string message , ref SocketSession session)
         {
             try
@@ -24,7 +25,7 @@ namespace JT1078NetCore.Protocol.JT1078
                     string fragment = string.Empty;                    
                     ProcessFileFilterPackageJT1078New(hex, out listDataMedia, out fragment);
                     session.Reverse = fragment;
-                    FlvEncoder encoder = new FlvEncoder();
+                   
                     foreach (string item in listDataMedia)
                     {                        
                         JT1078Package package = JT1078Serializer.Deserialize(item.ToHexBytes());
@@ -45,26 +46,29 @@ namespace JT1078NetCore.Protocol.JT1078
                             //    //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
                             //    //Global.Ws.LastTime = timeNow;
                             //}
-                            if (!session.HasFlvHeader)
+                            if(fullpackage.Label3.DataType == JT1078DataType.VideoI
+                                || fullpackage.Label3.DataType == JT1078DataType.VideoP)
                             {
-                                if(fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                                if (!session.HasFlvHeader)
                                 {
                                     session.HasFlvHeader = true;
-                                    var videoTag = encoder.EncoderVideoTag(fullpackage, true);                                    
+                                    var videoTag = Global.encoder.EncoderVideoTag(fullpackage, true);
                                     session.LastIFrame = fullpackage;
                                     session.Broadcast(videoTag);
-                                }                             
-                            }
-                            else
-                            {
-                                var videoTag = encoder.EncoderVideoTag(fullpackage, false);                                
-                                if (fullpackage.Label3.DataType == JT1078DataType.VideoI)
-                                {
-                                    // iframe
-                                    session.LastIFrame = fullpackage;
                                 }
-                                session.Broadcast(videoTag);
-                            }                                                  
+                                else
+                                {
+                                    var videoTag = Global.encoder.EncoderVideoTag(fullpackage, false);
+                                    if (fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                                    {
+                                        // iframe
+                                        session.LastIFrame = fullpackage;
+                                    }
+                                    session.Broadcast(videoTag);
+                                }
+                            }
+                           
+                           
                         }
                     }
                 }

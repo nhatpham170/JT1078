@@ -37,7 +37,7 @@ namespace JT1078NetCore.Http
             if (path.StartsWith("/live/"))
             {
                 // is websocket 
-                string token = path.Substring(path.Length - 36,32);
+                string token = path.Substring(path.Length - 32);
                 SessionProxy sessionProxy;
                 if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
                 {
