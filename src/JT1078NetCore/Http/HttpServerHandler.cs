@@ -17,18 +17,6 @@ namespace JT1078NetCore.Http
 {
     public class HttpServerHandler : SimpleChannelInboundHandler<IFullHttpRequest>
     {
-
-        sealed class MessageBody
-        {
-            public MessageBody(string message)
-            {
-                this.Message = message;
-            }
-
-            public string Message { get; }
-
-            public string ToJsonFormat() => "{" + $"\"{nameof(MessageBody)}\" :" + "{" + $"\"{nameof(this.Message)}\"" + " :\"" + this.Message + "\"}" + "}";
-        }
         protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest req)
         {
             string[] arr = req.Uri.Split('?');
@@ -46,28 +34,8 @@ namespace JT1078NetCore.Http
                     response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
                     response.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
                     response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
-                    response.Headers.Set(HttpHeaderNames.CacheControl, "no-cache");
-                    //var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
-                    ////response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
-                    //response.Headers.Set(HttpHeaderNames.ContentType, HttpHeaderValues.TextPlain);
-                    //response.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
-                    //response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
-                    //response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
-                    //context.Response.StatusCode = 200;
-                    //context.Response.ContentType = "video/x-flv";
-                    //context.Response.Headers.Add("Cache-Control", "no-cache");
-                    //context.Response.Headers.Add("Connection", "keep-alive");
-                    //context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    //context.Response.Headers.Add("Content-Disposition", $"inline; filename=\"{streamId}.flv\"");
-                    // FLV header (13 bytes)    
-            //        byte[] FLV_HEADER = new byte[] {
-            //0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09,
-            //0x00, 0x00, 0x00, 0x00    };
-                    ctx.WriteAndFlushAsync(response);
-                    //ctx.WriteAndFlushAsync(Unpooled.WrappedBuffer(FLV_HEADER));
-                    // 
-                    //ctx.WriteAndFlushAsync(FLV_HEADER);
-                    //await ctx.WriteAndFlushAsync(LastHttpContent.Empty);
+                    response.Headers.Set(HttpHeaderNames.CacheControl, "no-cache");                 
+                    ctx.WriteAndFlushAsync(response);                
                     sessionProxy.SetSession(ctx);
                     Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
                 }
@@ -75,8 +43,7 @@ namespace JT1078NetCore.Http
                 {
                     // token invalid
                     ctx.Channel.CloseAsync();
-                }
-                //return;
+                }                
             }
 
         }

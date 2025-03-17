@@ -128,8 +128,9 @@ namespace JT1078NetCore.Http
                 string imei = queryParmas.Get("imei").ToString().ToLower();
                 string ch = queryParmas.Get("ch").ToString().ToLower();
                 string streamType = queryParmas.Get("streamType").ToString().ToLower();
-                string mediaTypeStr = (queryParmas.Get("mediaType") != null
-                        ? queryParmas.Get("mediaType").ToString().ToLower() : "0");
+                //string mediaTypeStr = (queryParmas.Get("mediaType") != null
+                //        ? queryParmas.Get("mediaType").ToString().ToLower() : "0");
+                string mediaTypeStr = "1";
                 MediaDefine.MediaType mediaType = (MediaDefine.MediaType)int.Parse(mediaTypeStr);
                 string path = arr[0];
                 LiveResponse response = new LiveResponse();

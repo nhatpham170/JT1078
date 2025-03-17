@@ -41,6 +41,8 @@
             txtLogPath = new TextBox();
             label5 = new Label();
             ckbSsl = new CheckBox();
+            txtHttpFlv = new TextBox();
+            label6 = new Label();
             SuspendLayout();
             // 
             // btnStart
@@ -92,7 +94,7 @@
             txtPortWs.Name = "txtPortWs";
             txtPortWs.Size = new Size(213, 26);
             txtPortWs.TabIndex = 5;
-            txtPortWs.Text = "6602";
+            txtPortWs.Text = "8801";
             // 
             // label2
             // 
@@ -165,18 +167,39 @@
             // 
             ckbSsl.AutoSize = true;
             ckbSsl.Font = new Font("Times New Roman", 12.75F, FontStyle.Regular, GraphicsUnit.Point);
-            ckbSsl.Location = new Point(85, 179);
+            ckbSsl.Location = new Point(85, 217);
             ckbSsl.Name = "ckbSsl";
             ckbSsl.Size = new Size(56, 23);
             ckbSsl.TabIndex = 12;
             ckbSsl.Text = "SSL";
             ckbSsl.UseVisualStyleBackColor = true;
             // 
+            // txtHttpFlv
+            // 
+            txtHttpFlv.Font = new Font("Times New Roman", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            txtHttpFlv.Location = new Point(85, 184);
+            txtHttpFlv.Name = "txtHttpFlv";
+            txtHttpFlv.Size = new Size(213, 26);
+            txtHttpFlv.TabIndex = 14;
+            txtHttpFlv.Text = "8802";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new Font("Times New Roman", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            label6.Location = new Point(12, 184);
+            label6.Name = "label6";
+            label6.Size = new Size(59, 19);
+            label6.TabIndex = 13;
+            label6.Text = "Http Flv";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(txtHttpFlv);
+            Controls.Add(label6);
             Controls.Add(ckbSsl);
             Controls.Add(txtLogPath);
             Controls.Add(label5);
@@ -212,5 +235,7 @@
         private TextBox txtLogPath;
         private Label label5;
         private CheckBox ckbSsl;
+        private TextBox txtHttpFlv;
+        private Label label6;
     }
 }

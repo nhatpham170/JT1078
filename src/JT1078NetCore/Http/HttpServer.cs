@@ -38,45 +38,13 @@ namespace JT1078NetCore.Http
              Log.WriteStatusLog($"Current latency mode for garbage collection: {GCSettings.LatencyMode}");
             Log.WriteStatusLog("\n");
             IEventLoopGroup bossGroup;
-            IEventLoopGroup workGroup;
-            //if (useLibuv)
-            //{
-            //    var dispatcher = new DispatcherEventLoopGroup();
-            //    bossGroup = dispatcher;
-            //    workGroup = new WorkerEventLoopGroup(dispatcher);
-            //}
-            //else
-            //{
-            //    bossGroup = new MultithreadEventLoopGroup(1);
-            //    workGroup = new MultithreadEventLoopGroup();
-            //}
+            IEventLoopGroup workGroup;         
             bossGroup = new MultithreadEventLoopGroup(1);
-            workGroup = new MultithreadEventLoopGroup();
-            X509Certificate2 tlsCertificate = null;
-            //if (ServerSettings.IsSsl)
-            //{
-            //    tlsCertificate = new X509Certificate2(Path.Combine(CommonHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
-            //}
+            workGroup = new MultithreadEventLoopGroup();         
             try
             {
                 var bootstrap = new ServerBootstrap();
-                bootstrap.Group(bossGroup, workGroup);
-
-                //if (useLibuv)
-                //{
-                //    bootstrap.Channel<TcpServerChannel>();
-                //    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-                //        || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                //    {
-                //        bootstrap
-                //            .Option(ChannelOption.SoReuseport, true)
-                //            .ChildOption(ChannelOption.SoReuseaddr, true);
-                //    }
-                //}
-                //else
-                //{
-                //    bootstrap.Channel<TcpServerSocketChannel>();
-                //}
+                bootstrap.Group(bossGroup, workGroup);           
 
                 bootstrap
                     .Channel<TcpServerSocketChannel>()
@@ -87,11 +55,7 @@ namespace JT1078NetCore.Http
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
 
-                        IChannelPipeline pipeline = channel.Pipeline;
-                        if (tlsCertificate != null)
-                        {
-                            pipeline.AddLast(TlsHandler.Server(tlsCertificate));
-                        }
+                        IChannelPipeline pipeline = channel.Pipeline;                      
                         pipeline.AddLast(new HttpRequestDecoder());
                         pipeline.AddLast(new HttpResponseEncoder());
                         pipeline.AddLast(new HttpObjectAggregator(65536));
@@ -108,9 +72,7 @@ namespace JT1078NetCore.Http
                     + $"://127.0.0.1:{port}/");
                 Log.WriteStatusLog("Listening on "
                     + $"{(ServerSettings.IsSsl ? "wss" : "ws")}"
-                    + $"://127.0.0.1:{port}/websocket");
-
-                //await bootstrapChannel.CloseAsync();
+                    + $"://127.0.0.1:{port}/websocket");                
             }
             finally
             {

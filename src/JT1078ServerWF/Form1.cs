@@ -39,6 +39,7 @@ namespace JT1078ServerWF
             JT1078NetCore.Common.Global.TCPPort = int.Parse(txtTCPPort.Text);
             JT1078NetCore.Common.Global.APIHost = txtHostAPI.Text;
             JT1078NetCore.Common.Global.APIPort = int.Parse(txtPortAPI.Text);
+            JT1078NetCore.Common.Global.HttpFlvPort = int.Parse(txtHttpFlv.Text);
 
             JT1078NetCore.Common.Global.WsPort = int.Parse(txtPortWs.Text);
             JT1078NetCore.Common.Global.WsHost = txtHostAPI.Text;
@@ -134,7 +135,6 @@ namespace JT1078ServerWF
                 await webSocketServer.Init(Global.APIPort);
 
                 JT1078NetCore.Http.HttpServer FlvHttpServer = new JT1078NetCore.Http.HttpServer();
-                Global.HttpFlvPort = 8802;
                 await FlvHttpServer.Init(Global.HttpFlvPort);
                 this.status = true;
                 btnStart.BackColor = Color.GreenYellow;
