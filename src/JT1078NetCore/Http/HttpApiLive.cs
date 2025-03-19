@@ -131,17 +131,27 @@ namespace JT1078NetCore.Http
                 //string mediaTypeStr = (queryParmas.Get("mediaType") != null
                 //        ? queryParmas.Get("mediaType").ToString().ToLower() : "0");
                 string mediaTypeStr = "1";
+                string extension = "flv";
+                
                 MediaDefine.MediaType mediaType = (MediaDefine.MediaType)int.Parse(mediaTypeStr);
+                switch (mediaType)
+                {
+                    case MediaDefine.MediaType.HttpFlv:
+                    default:
+                        extension = "flv";
+                        break;
+                }
                 string path = arr[0];
                 LiveResponse response = new LiveResponse();
                 response.token = SocketSession.NewToken();
                 response.status = 1;
-                response.link = $"{Protocol(mediaType)}/{imei}_{ch}_{streamType}_{response.token}";
+                response.link = $"{Protocol(mediaType)}/{imei}_{ch}_{streamType}_{response.token}_{mediaTypeStr}.{extension}";
                 //if(mediaType == MediaDefine.MediaType.HttpFlv)
                 //{
                 //    response.link += ".flv";
                 //}
-                string pathProxy = $"/{TYPE}/{imei}_{ch}_{streamType}_{response.token}";
+                string pathProxy = $"/{TYPE}/{imei}_{ch}_{streamType}_{response.token}_{streamType}.{extension}";
+                //string pathProxy = response.link;
                 SocketSession session = new SocketSession();
                 session.PlayType = TYPE;
                 session.Imei = imei;
@@ -162,17 +172,19 @@ namespace JT1078NetCore.Http
                     response.isReady = true;
                 }
                 // add proxy
+                SessionProxy sessionProxy = new SessionProxy(response.token);
+                sessionProxy.Key = key;
                 switch (mediaType)
                 {
                     
                     case MediaDefine.MediaType.HttpFlv:
-                        SessionProxy sessionProxy = new SessionProxy(response.token);
-                        sessionProxy.Key = key;
                         sessionProxy.MediaType = MediaDefine.MediaType.HttpFlv;
                         Global.SESSIONS_PROXY[response.token] = sessionProxy;
                         break;
                     default:
-                    case MediaDefine.MediaType.WebSocketFlv:
+                    case MediaDefine.MediaType.WebSocketFlv:                    
+                        sessionProxy.MediaType = MediaDefine.MediaType.WebSocketFlv;
+                        Global.SESSIONS_PROXY[response.token] = sessionProxy;
                         Global.WsServer.AddWebSocketService<SessionProxy>(pathProxy);
                         break;
                 }                                

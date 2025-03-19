@@ -19,6 +19,8 @@ using JT1078NetCore.Common;
 using Newtonsoft.Json;
 using Microsoft.VisualBasic;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+using System.Configuration;
 
 namespace JT1078ServerWF
 {
@@ -33,9 +35,33 @@ namespace JT1078ServerWF
         {
             InitializeComponent();
         }
-
+        private void LoadInitConfig()
+        {
+            try
+            {
+                // load file config
+                var Configuration = new ConfigurationBuilder()
+               .SetBasePath(AppContext.BaseDirectory)
+               .AddJsonFile("appsettings.json")
+               .Build();
+                var sad = Configuration["tcpPort"].ToString();
+                txtHostAPI.Text =Configuration["hostAPI"].ToString();
+                txtPortAPI.Text = Configuration["portAPI"].ToString();
+                txtPortWs.Text = Configuration["wsFlvPort"].ToString();
+                txtHttpFlv.Text = Configuration["httpFlvPort"].ToString();
+                ckbSsl.Checked = bool.Parse(Configuration["ssl"]);
+                txtLogPath.Text = Configuration["logPath"].ToString();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+           
+        }
         private void LoadConfig()
         {
+       
+            // 
             JT1078NetCore.Common.Global.TCPPort = int.Parse(txtTCPPort.Text);
             JT1078NetCore.Common.Global.APIHost = txtHostAPI.Text;
             JT1078NetCore.Common.Global.APIPort = int.Parse(txtPortAPI.Text);
@@ -193,7 +219,7 @@ namespace JT1078ServerWF
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            LoadInitConfig();
         }
     }
 }

@@ -12,4 +12,10 @@
     <ProjectReference Include="..\JT1078NetCore\JT1078NetCore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

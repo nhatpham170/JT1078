@@ -24,20 +24,27 @@ namespace JT1078NetCore.Http
 
             if (path.StartsWith("/live/"))
             {
-                // is websocket 
-                string token = path.Substring(path.Length - 32);
+                // is websocket                 
+                string [] temp = path.Substring(6).Split(new char[] { '.' , '_' });
+                string token = temp[3];
                 SessionProxy sessionProxy;
                 if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
                 {
-                    var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
-                    response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
-                    response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
-                    response.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
-                    response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
-                    response.Headers.Set(HttpHeaderNames.CacheControl, "no-cache");                 
-                    ctx.WriteAndFlushAsync(response);                
-                    sessionProxy.SetSession(ctx);
-                    Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
+                    if (sessionProxy.Status == MediaDefine.SessionStatus.Init) {
+                        var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
+                        response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
+                        response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                        response.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                        response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
+                        response.Headers.Set(HttpHeaderNames.CacheControl, "no-cache");
+                        ctx.WriteAndFlushAsync(response);
+                        sessionProxy.SetSession(ctx);
+                        Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
+                    }
+                    else
+                    {
+                        ctx.Channel.CloseAsync();
+                    }                  
                 }
                 else
                 {

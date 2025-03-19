@@ -126,9 +126,9 @@ namespace JT1078NetCore.Protocol.JT1078
                             //}
 
                             int length = Convert.ToInt16(str.Substring(indexLength, 4), 0x10) * 2;
-                            if (length > 1908)
+                            if (length > 1900)
                             {
-                                length = 1908;
+                                length = 1900;
                             }
                             int fullLength = length + indexLength + 4;
 

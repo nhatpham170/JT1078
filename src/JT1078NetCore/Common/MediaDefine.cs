@@ -19,7 +19,7 @@ namespace JT1078NetCore.Common
         }
         public enum SessionStatus
         {
-            Unknown = 0,
+            Init = 0,
             Subscribe = 1,
             Destroy = 2,
         }

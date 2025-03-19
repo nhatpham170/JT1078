@@ -36,7 +36,7 @@ namespace JT1078NetCore.Http
                 //var msg = String.Format(fmt, _name);                
                 //Sessions.Broadcast(msg);
                 string id = this.ID;
-                Global.Ws = this;
+                //Global.Ws = this;
                 //byte[] demo = Encoding.UTF8.GetBytes("FLV");
                 //this.Send(demo);
             }

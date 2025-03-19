@@ -35,6 +35,7 @@ namespace JT1078NetCore.Socket
         public virtual void SetSession(IChannelHandlerContext channel)
         {
             _channel = channel;
+            this.Status = MediaDefine.SessionStatus.Subscribe;
         }
         //public virtual void SendMsg(byte[] data)
         //{
@@ -97,10 +98,10 @@ namespace JT1078NetCore.Socket
         protected override void OnOpen()
         {
             StartAt = DateUtil.Unix;
-            string[] arr = Context.RequestUri.LocalPath.Split('/');
+            string[] arr = Context.RequestUri.LocalPath.Split(new char [] { '.','_'});
             string path = arr[arr.Length - 1];
-            Token = path.Substring(path.Length - 32);
-            Key = arr[arr.Length - 2] + "_" + path.Substring(0, path.Length - 33);
+            Token = arr[3];
+            //Key = $"{arr[0]}_{arr[1]}_{arr[2]}_{arr[3]}";
             Status = MediaDefine.SessionStatus.Subscribe;
             SentAt = 0;
             Path = Context.RequestUri.LocalPath;
@@ -109,6 +110,7 @@ namespace JT1078NetCore.Socket
             SessionProxy old;
             if (Global.SESSIONS_PROXY.TryGetValue(Token, out old))
             {
+                Key = old.Key;
                 if (old.StartAt > 0)
                 {
                     // block token                    

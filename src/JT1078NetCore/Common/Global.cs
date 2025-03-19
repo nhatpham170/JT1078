@@ -25,7 +25,7 @@ namespace JT1078NetCore.Common
         public static ushort UDP_SQE = 0;
         public static uint UDP_TIME = 0;
         public static ulong LastTime = 0;
-        public static Http.WsService.WsSession Ws;
+        //public static Http.WsService.WsSession Ws;
 
         public static string LogPath;
         public static int TCPPort;
