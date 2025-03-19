@@ -9,28 +9,30 @@ using JT1078.Protocol.Extensions;
 using JT1078.Flv;
 using System.IO;
 using JT1078.Flv.Metadata;
+using JT1078.Protocol.H264;
 
 namespace JT1078NetCore.Protocol.JT1078
-{       
+{
     public class JT1078Filter
-    {          
-        public void MsgProcess(string message , ref SocketSession session)
+    {
+        public void MsgProcess(string message, ref SocketSession session)
         {
             try
-            {                                
+            {
                 if (message != null)
                 {
                     string hex = session.Reverse + message;
                     List<string> listDataMedia = new List<string>();
-                    string fragment = string.Empty;                    
+                    string fragment = string.Empty;
                     ProcessFileFilterPackageJT1078New(hex, out listDataMedia, out fragment);
                     session.Reverse = fragment;
-                   
+
                     foreach (string item in listDataMedia)
-                    {                        
+                    {
+                        Log.WriteDeviceLog("Hex: " + item, session.Imei);
                         JT1078Package package = JT1078Serializer.Deserialize(item.ToHexBytes());
                         JT1078Package fullpackage = JT1078Serializer.Merge(package);
-                        if(fullpackage != null)
+                        if (fullpackage != null)
                         {
                             //if(Global.Ws != null )
                             //{
@@ -46,29 +48,47 @@ namespace JT1078NetCore.Protocol.JT1078
                             //    //fullpackage.LastFrameInterval = (ushort)(timeNow - Global.Ws.LastTime);
                             //    //Global.Ws.LastTime = timeNow;
                             //}
-                            if(fullpackage.Label3.DataType == JT1078DataType.VideoI
-                                || fullpackage.Label3.DataType == JT1078DataType.VideoP)
+                            if (fullpackage.Label3.DataType == JT1078DataType.VideoI
+                                || fullpackage.Label3.DataType == JT1078DataType.VideoP
+                                //|| fullpackage.Label3.DataType == JT1078DataType.Audio
+                                )
                             {
                                 if (!session.HasFlvHeader)
                                 {
                                     session.HasFlvHeader = true;
-                                    var videoTag = Global.encoder.EncoderVideoTag(fullpackage, true);
-                                    session.LastIFrame = fullpackage;
-                                    session.Broadcast(videoTag);
+                                    if (fullpackage.Label3.DataType == JT1078DataType.Audio)
+                                    {
+                                        var audioData = Global.encoder.EncoderAudioTag(fullpackage, true);
+                                        session.Broadcast(audioData);
+                                    }
+                                    else
+                                    {
+                                        var videoTag = Global.encoder.EncoderVideoTag(fullpackage, true);
+                                        session.LastIFrame = fullpackage;
+                                        session.Broadcast(videoTag);
+                                    }
                                 }
                                 else
                                 {
-                                    var videoTag = Global.encoder.EncoderVideoTag(fullpackage, false);
-                                    if (fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                                    if (fullpackage.Label3.DataType == JT1078DataType.Audio)
                                     {
-                                        // iframe
-                                        session.LastIFrame = fullpackage;
+                                        //var audioData = Global.encoder.EncoderAudioTag(fullpackage, false);
+                                        //session.Broadcast(audioData);
                                     }
-                                    session.Broadcast(videoTag);
+                                    else
+                                    {
+                                        var videoTag = Global.encoder.EncoderVideoTag(fullpackage, false);
+                                        if (fullpackage.Label3.DataType == JT1078DataType.VideoI)
+                                        {
+                                            // iframe
+                                            session.LastIFrame = fullpackage;
+                                        }
+                                        session.Broadcast(videoTag);
+                                    }
                                 }
                             }
-                           
-                           
+
+
                         }
                     }
                 }
@@ -135,6 +155,7 @@ namespace JT1078NetCore.Protocol.JT1078
                             if (index + fullLength <= str.Length)
                             {
                                 string fullPackage = str.Substring(index, fullLength);
+                                //listData.Add(fullPackage);
                                 if (isVIdeo)
                                 {
                                     // video

@@ -17,7 +17,7 @@ namespace JT1078NetCore.Socket
         public string PlayType { get; set; } // live | playback
         public string Imei { get; set; }
         public int Chl { get; set; }
-        public int StreamType { get; set; }
+        public int StreamType { get; set; } // 0: Main | 1: sub
         public bool IsConnected { get; set; }
         public string ChannelId { get; set; }
         public IChannelHandlerContext Channel { get; set; }
@@ -50,7 +50,6 @@ namespace JT1078NetCore.Socket
             if (string.IsNullOrEmpty(key))
             {
                 _key = $"{PlayType}_{Imei}_{Chl}_{StreamType}";
-
             }
             else
             {

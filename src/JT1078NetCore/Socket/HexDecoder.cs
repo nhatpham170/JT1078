@@ -26,6 +26,7 @@ namespace JT1078NetCore.Socket
                     if (!string.IsNullOrEmpty(hex))
                     {                        
                         output.Add(hex);
+                        //Log.WriteDeviceLog(hex, channelId);
                     }
                     message = null;
                 }

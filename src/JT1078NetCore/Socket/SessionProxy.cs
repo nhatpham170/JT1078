@@ -82,6 +82,7 @@ namespace JT1078NetCore.Socket
         }
         public virtual void SendMsg(byte[] data)
         {
+            if (data.Length == 0) return;
             SentAt = DateUtil.Unix;
             if (MediaType == MediaDefine.MediaType.HttpFlv)
             {

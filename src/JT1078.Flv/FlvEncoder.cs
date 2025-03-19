@@ -323,7 +323,7 @@ namespace JT1078.Flv
                 if (needVideoHeader)
                 {
                     //flv header
-                    var flvHeader = EncoderFlvHeader(true, false);
+                    var flvHeader = EncoderFlvHeader(true);
                     flvMessagePackWriter.WriteArray(flvHeader);
                     // always 0
                     flvMessagePackWriter.WriteUInt32(0);
@@ -335,11 +335,14 @@ namespace JT1078.Flv
                     var rawData = h264Decoder.DiscardEmulationPreventionBytes(sps.RawData);
                     ExpGolombReader h264GolombReader = new ExpGolombReader(rawData);
                     SPSInfo spsInfo = h264GolombReader.ReadSPS();
-                    //script tag
+                    //script tag                       
+                    //JT1078AVFrame jT1078AVFrame  = h264Decoder.ParseAVFrame(package);
                     var scriptTag = EncoderScriptTag(spsInfo);
+                    //var scriptTag = EncoderScriptTag(jT1078AVFrame, false,15);
                     flvMessagePackWriter.WriteArray(scriptTag);
                     // first video tag
                     var firstVideoTag = EncoderFirstVideoTag(spsInfo, sps, pps, sei);
+                    //var firstVideoTag = EncoderFirstVideoTag(jT1078AVFrame);
                     flvMessagePackWriter.WriteArray(firstVideoTag);              
                 }
                 foreach (var naln in nalus)
