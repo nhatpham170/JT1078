@@ -7,10 +7,16 @@ namespace JT1078NetCore.Common
 {
     public class MediaDefine
     {
+      
         public enum MediaType
         {
             WebSocketFlv = 0,
             HttpFlv = 1,           
+        }
+        public enum StreamType
+        {
+            Sub = 0,
+            Main = 1,
         }
         public class PlayType
         {

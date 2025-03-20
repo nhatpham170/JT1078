@@ -24,14 +24,14 @@ namespace JT1078NetCore.Protocol.JT1078
                     string hex = session.Reverse + message;
                     List<string> listDataMedia = new List<string>();
                     string fragment = string.Empty;
-                    ProcessFileFilterPackageJT1078New(hex, out listDataMedia, out fragment);
+                    ProcessFileFilterPackage(hex, out listDataMedia, out fragment);
                     session.Reverse = fragment;
 
                     foreach (string item in listDataMedia)
                     {
-                        Log.WriteDeviceLog("Hex: " + item, session.Imei);
+                        //Log.WriteDeviceLog("Hex: " + item, session.Imei);
                         JT1078Package package = JT1078Serializer.Deserialize(item.ToHexBytes());
-                        JT1078Package fullpackage = JT1078Serializer.Merge(package);
+                        JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.History);
                         if (fullpackage != null)
                         {
                             //if(Global.Ws != null )
@@ -55,17 +55,25 @@ namespace JT1078NetCore.Protocol.JT1078
                             {
                                 if (!session.HasFlvHeader)
                                 {
-                                    session.HasFlvHeader = true;
+                                   
                                     if (fullpackage.Label3.DataType == JT1078DataType.Audio)
                                     {
-                                        var audioData = Global.encoder.EncoderAudioTag(fullpackage, true);
-                                        session.Broadcast(audioData);
+                                        var audioData = Global.encoder.EncoderAudioTag(fullpackage, true);                                        
+                                        if (audioData != null && audioData.Length > 0)
+                                        {
+                                            session.HasFlvHeader = true;
+                                            session.Broadcast(audioData);
+                                        }
                                     }
                                     else
                                     {
                                         var videoTag = Global.encoder.EncoderVideoTag(fullpackage, true);
-                                        session.LastIFrame = fullpackage;
-                                        session.Broadcast(videoTag);
+                                        session.LastIFrame = fullpackage;                                        
+                                        if(videoTag != null && videoTag.Length > 0)
+                                        {
+                                            session.HasFlvHeader = true;
+                                            session.Broadcast(videoTag);                                          
+                                        }
                                     }
                                 }
                                 else
@@ -167,6 +175,59 @@ namespace JT1078NetCore.Protocol.JT1078
 
                             }
                             else { break; }
+                        }
+                        else { break; }
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionHandler.ExceptionProcess(ex);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ExceptionHandler.ExceptionProcess(e);
+            }
+        }
+        private void ProcessFileFilterPackage(string hex, out List<string> listData, out string fragment)
+        {
+            //30316364 //FH_Flag
+            //81 // Label1
+            //06 // Label2
+            //0001 // SN
+            //015000085960 // SIM
+            //01 // LogicChannelNumber
+            //30 // Label3
+            //000001912BEF9AC1 // Timestamp
+            //0140 // DataBodyLength
+            //57505E50D7D8D9D6D5D4D0D1D2DCD2D6D5D65C4059D5DFD9DED75D585B5F55DDD8DDD55653535D52D7DBC7D3D4D1D754505F44445FD7DFD1535257D6D9C5DCD6545454D6D7D1555E5D53585AD4C6C1DD57454153D4D5DFD2515C5A5DD2DAC6CDC4565A5B5B5CD3DCD3D6D6D1D6DDDCD6D1565B5B59454150DDD3DCDD5C4C5BD8C1D8D3D558445D5D57D0D1D9CBCFD7525C5257D55356D0D0DD545957DCDDD557555455D3C5C1D9545E5B5D535E5154565F5CD1D45250D1DEDED55E56D1515350535DD5DFD55351DDDED0D9C1DD595ED4D1D2DCD3545057525A5B57D6D4D4D1D5D557575556D3DBD2D4D3D751D5D6525B5C595ED4D1D1DD555F5DD6D352D5C5C6DDD5D3D2D65347455E54DFD2575651585ED6DFD1D6555E57DCDDD9DF505B53D655D0D6535357DCC4DBDC555D505C5E56545755D3D3D2DFD154505755D5D55359            
+            listData = new List<string>();
+            fragment = string.Empty;
+            try
+            {
+                string START = "30316364";
+                // write text
+                string str = hex;
+                fragment = str;                
+                while (str.Length > 52)
+                {
+                    try
+                    {                        
+                        int index = str.IndexOf(START);
+                        if (index >= 0 && str.Length >= 80)
+                        {
+                            int nextIndex = str.IndexOf( START, index + START.Length);
+                            if (nextIndex > 0) {
+                                // find 
+                                string fullPackage = str.Substring(index, nextIndex - index);
+                                listData.Add(fullPackage);
+                                str = str.Substring(index + fullPackage.Length);
+                                fragment = str;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                         else { break; }
                     }

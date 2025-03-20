@@ -18,24 +18,29 @@ namespace JT1078NetCore.Socket
 
                 if (message != null)
                 {
-                    if (session == null) {
+                    if (session == null && message.Length > 256) {
                         if (JT1078Define.SessionInfo(message, out session))
                         {
                             session.ChannelId = channelId;
-                        }
-                        SocketSession sessionMain;
-                        if(Global.SESSIONS_MAIN.TryGetValue(session.Key,out sessionMain))
-                        {                            
-                            sessionMain.Start(context);                            
-                            sessionMain.Protocol = session.Protocol;
-                            session = sessionMain;
-                            Global.SESSIONS_MAIN[sessionMain.Key] = session;
-                            Global.SESSIONS_CHANNEL[channelId] = session;
+                            SocketSession sessionMain;
+                            if (Global.SESSIONS_MAIN.TryGetValue(session.Key, out sessionMain))
+                            {
+                                sessionMain.Start(context);
+                                sessionMain.Protocol = session.Protocol;
+                                session = sessionMain;
+                                Global.SESSIONS_MAIN[sessionMain.Key] = session;
+                                Global.SESSIONS_CHANNEL[channelId] = session;
+                            }
+                            else
+                            {
+                                context.CloseAsync().Wait();
+                            }
                         }
                         else
                         {
                             context.CloseAsync().Wait();
                         }
+                       
                     }
                     //SocketSession session;
                     //if (!SocketService.Sessions.TryGetValue(channelId, out session))

@@ -17,7 +17,7 @@ namespace JT1078NetCore.Socket
         public string PlayType { get; set; } // live | playback
         public string Imei { get; set; }
         public int Chl { get; set; }
-        public int StreamType { get; set; } // 0: Main | 1: sub
+        public MediaDefine.StreamType StreamType { get; set; } // 0: Main | 1: sub
         public bool IsConnected { get; set; }
         public string ChannelId { get; set; }
         public IChannelHandlerContext Channel { get; set; }
@@ -45,16 +45,21 @@ namespace JT1078NetCore.Socket
             Log.WriteFeatureLog($"[START]: session: {Key}", TYPE_LOG);
             Update();
         }
-        public string SetKey(string key = null)
+        public string SetKey(string key = null, string token = "")
         {
             if (string.IsNullOrEmpty(key))
             {
-                _key = $"{PlayType}_{Imei}_{Chl}_{StreamType}";
+                _key = $"{PlayType}_{Imei}_{Chl}_{(int)StreamType}";
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _key += "_" + token;
+                }
             }
             else
             {
                 _key = key;
             }
+            
             return _key;
         }
         public void InitSession()
@@ -75,6 +80,11 @@ namespace JT1078NetCore.Socket
                 Log.WriteFeatureLog($"[REMOVE-TOKEN]: session: {Key}, token: {token}", TYPE_LOG);
                 Subscribers.Remove(token);
                 //Update();
+            }
+            if(Subscribers.Count == 0 )
+            {
+                Log.WriteFeatureLog($"[Unsubscirbe]: session: {Key}, Not player", TYPE_LOG);
+                Stop(); 
             }
         }
 

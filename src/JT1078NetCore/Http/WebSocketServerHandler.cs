@@ -93,7 +93,7 @@ namespace JT1078NetCore.Http
                     HttpApiLive.Close(ctx, req);
                     return;
                 case "/api/playback":
-
+                    HttpApiLive.ProcessPlayback(ctx, req);
                     break;
                 default:
                     break;

@@ -30,7 +30,42 @@ namespace JT1078NetCore.Http
                 SessionProxy sessionProxy;
                 if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
                 {
+                   
                     if (sessionProxy.Status == MediaDefine.SessionStatus.Init) {
+                        var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
+                        response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
+                        response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                        response.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                        response.Headers.Set(HttpHeaderNames.AccessControlAllowOrigin, "*");
+                        response.Headers.Set(HttpHeaderNames.CacheControl, "no-cache");
+                        ctx.WriteAndFlushAsync(response);
+                        sessionProxy.SetSession(ctx);
+                        Global.SESSIONS_MAIN[sessionProxy.Key].AddSubscribe(sessionProxy);
+                    }
+                    else
+                    {                       
+                        ctx.Channel.CloseAsync();
+                    }                  
+                }
+                else
+                {
+                    // token invalid
+                    ctx.Channel.CloseAsync();
+                }                
+            }
+
+
+            else if (path.StartsWith("/playback/"))
+            {
+                // is websocket                 
+                string[] temp = path.Substring(6).Split(new char[] { '.', '_' });
+                string token = temp[3];
+                SessionProxy sessionProxy;
+                if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
+                {
+
+                    if (sessionProxy.Status == MediaDefine.SessionStatus.Init)
+                    {
                         var response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
                         response.Headers.Set(HttpHeaderNames.ContentType, "video/x-flv");
                         response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
@@ -44,16 +79,21 @@ namespace JT1078NetCore.Http
                     else
                     {
                         ctx.Channel.CloseAsync();
-                    }                  
+                    }
                 }
                 else
                 {
                     // token invalid
                     ctx.Channel.CloseAsync();
-                }                
+                }
             }
 
         }
+        //public override void ChannelReadComplete(IChannelHandlerContext context)
+        //{
+        //    context.FireChannelReadComplete();
+        //}
+
         public override void ChannelActive(IChannelHandlerContext context)
         {
             try

@@ -5,9 +5,11 @@ using JT1078NetCore.Common;
 using JT1078NetCore.Socket;
 using JT1078NetCore.Utils;
 using Newtonsoft.Json;
+using System.Collections.Specialized;
 using System.Text;
 using System.Web;
 using WebSocketSharp.Net;
+using static JT1078NetCore.Common.MediaDefine;
 
 namespace JT1078NetCore.Http
 {
@@ -15,34 +17,35 @@ namespace JT1078NetCore.Http
     {
         public HttpApiLive() { }
         public HttpApiLive(string url) { }
-        public const string TYPE = MediaDefine.PlayType.Live;   
+        //public const string TYPE = MediaDefine.PlayType.Live;
         public static string ProtocolWs()
         {
             if (Global.IsSsl)
             {
                 return $"wss://{Global.WsHost}/live";
-            }else
+            }
+            else
             {
                 return $"ws://{Global.WsHost}:{Global.WsPort}/live";
-            }            
+            }
         }
 
-        public static string Protocol(MediaDefine.MediaType mediaType)
+        public static string Protocol(MediaDefine.MediaType mediaType, string playType = MediaDefine.PlayType.Live)
         {
             switch (mediaType)
             {
 
                 case MediaDefine.MediaType.HttpFlv:
                     if (Global.IsSsl)
-                        return $"https://{Global.APIHost}/live";
-                    else return $"http://{Global.APIHost}:{Global.HttpFlvPort}/live";                    
+                        return $"https://{Global.APIHost}/{playType}";
+                    else return $"http://{Global.APIHost}:{Global.HttpFlvPort}/{playType}";
                 case MediaDefine.MediaType.WebSocketFlv:
                 default:
                     if (Global.IsSsl)
-                        return $"wss://{Global.WsHost}/live";
+                        return $"wss://{Global.WsHost}/{playType}";
                     else
-                        return $"ws://{Global.WsHost}:{Global.WsPort}/live";                    
-            }            
+                        return $"ws://{Global.WsHost}:{Global.WsPort}/{playType}";
+            }
         }
         public struct LiveResponse
         {
@@ -51,65 +54,11 @@ namespace JT1078NetCore.Http
             public string link { get; set; }
             public bool isReady { get; set; }
             //public string linkWs { get; set; }
-        }
-        public static void ProcessWS(HttpListenerRequest req, HttpListenerResponse res)
-        {
-            try
-            {
-                // parser
-                string[] arr = req.RawUrl.Split('?');
-                var queryParmas = HttpUtility.ParseQueryString(arr.Length > 1 ? arr[1] : "");
-                string imei = queryParmas.Get("imei").ToString().ToLower();
-                string ch = queryParmas.Get("ch").ToString().ToLower();
-                string streamType = queryParmas.Get("streamType").ToString().ToLower();                
-                string path = arr[0];
-                LiveResponse response = new LiveResponse();
-                response.token = SocketSession.NewToken();
-                response.status = 1;
-                
-                //response.link = $"{Protocol(mediaType)}/{imei}_{ch}_{streamType}_{response.token}";
-                string pathProxy = $"/{TYPE}/{imei}_{ch}_{streamType}_{response.token}";
-                SocketSession session = new SocketSession();
-                session.PlayType = TYPE;
-                session.Imei = imei;
-                session.Chl = int.Parse(ch);
-                session.StreamType = int.Parse(streamType);
-                string key = session.SetKey();
-                // add origin
-                SocketSession sessionOrigin;
-                if (!Global.SESSIONS_MAIN.TryGetValue(session.Key, out sessionOrigin))
-                {
-                    // new channel
-                    sessionOrigin = session;
-                    sessionOrigin.InitSession();
-                    Global.SESSIONS_MAIN[sessionOrigin.Key] = sessionOrigin;
-                }
-                if (sessionOrigin.IsConnected)
-                {
-                    response.isReady = true;
-                }
-                // add proxy
-                //SessionProxy sessionProxy = new SessionProxy(response.token);
-                //sessionProxy.Key = key;
-                //Global.SESSIONS_PROXY_WS[response.token] = pathProxy;
-                Global.WsServer.AddWebSocketService<SessionProxy>(pathProxy);
-                // add proxy
-                ResponseWs(req, res, response);
-            }
-            catch (Exception ex)
-            {
-                LiveResponse response = new LiveResponse();
-                response.token = string.Empty;
-                response.status = 0;
-                response.link = string.Empty;
-                ResponseWs(req, res, response);
-                ExceptionHandler.ExceptionProcess(ex);
-            }
-        }
+        }       
         private static void ResponseWs(HttpListenerRequest req, HttpListenerResponse res, LiveResponse dataResponse)
         {
             byte[] content = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dataResponse));
-            res.AppendHeader("content-type", "application/json; charset=UTF-8");              
+            res.AppendHeader("content-type", "application/json; charset=UTF-8");
             //res.Headers.Add("access-control-allow-credentials", "true");
             //res.Headers.Add("access-control-allow-headers", "X-Requested-With, Content-Type, Authorization, Gps.App.Version, Origin, Accept, Access-Control-Request-Method, Access-Control-Request-Headers");
             //res.Headers.Add("access-control-allow-methods", "POST, GET, PUT, DELETE");
@@ -122,41 +71,64 @@ namespace JT1078NetCore.Http
         {
             try
             {
-                // parser
+                string playType = MediaDefine.PlayType.Live;
+                if (req.Method.Name == "OPTIONS")
+                {
+                    LiveResponse resp = new LiveResponse();
+                    resp.token = SocketSession.NewToken();
+                    resp.status = 1;
+                    resp.link = "";
+                    Reponse(ctx, req, resp);
+                    return;
+                }
                 string[] arr = req.Uri.Split('?');
-                var queryParmas = HttpUtility.ParseQueryString(arr.Length > 1 ? arr[1] : "");
-                string imei = queryParmas.Get("imei").ToString().ToLower();
-                string ch = queryParmas.Get("ch").ToString().ToLower();
-                string streamType = queryParmas.Get("streamType").ToString().ToLower();
-                //string mediaTypeStr = (queryParmas.Get("mediaType") != null
-                //        ? queryParmas.Get("mediaType").ToString().ToLower() : "0");
-                string mediaTypeStr = "1";
-                string extension = "flv";
-                
-                MediaDefine.MediaType mediaType = (MediaDefine.MediaType)int.Parse(mediaTypeStr);
-                switch (mediaType)
+                NameValueCollection queryParmas = HttpUtility.ParseQueryString(arr.Length > 1 ? arr[1] : "");
+                string[] keys = queryParmas.AllKeys;
+                RequestLiveModel liveModel = new RequestLiveModel();
+                liveModel.Imei = keys.Contains("imei") ? queryParmas.Get("imei") : liveModel.Imei;
+                liveModel.Channel = keys.Contains("ch") ? queryParmas.Get("ch") : liveModel.Channel;
+                string qStreamType = keys.Contains("streamType") ? queryParmas.Get("streamType") : string.Empty;
+                string mediaType = keys.Contains("mediaType") ? queryParmas.Get("mediaType") : string.Empty;
+                if (qStreamType == "1")
+                {
+                    liveModel.StreamType = MediaDefine.StreamType.Main;
+                }
+                if (!string.IsNullOrEmpty(mediaType))
+                {
+                    switch (byte.Parse(mediaType))
+                    {
+                        case ((byte)MediaDefine.MediaType.WebSocketFlv):
+                            liveModel.MediaType = MediaDefine.MediaType.WebSocketFlv;
+                            break;
+                        case ((byte)MediaDefine.MediaType.HttpFlv):
+                        default:
+                            liveModel.MediaType = MediaDefine.MediaType.HttpFlv;
+                            break;
+                    }
+                }
+                // fixed http-flv
+                liveModel.MediaType = MediaDefine.MediaType.HttpFlv;
+               
+                switch (liveModel.MediaType)
                 {
                     case MediaDefine.MediaType.HttpFlv:
+                    case MediaDefine.MediaType.WebSocketFlv:
                     default:
-                        extension = "flv";
+                        liveModel.Extention = "flv";
                         break;
                 }
                 string path = arr[0];
                 LiveResponse response = new LiveResponse();
                 response.token = SocketSession.NewToken();
                 response.status = 1;
-                response.link = $"{Protocol(mediaType)}/{imei}_{ch}_{streamType}_{response.token}_{mediaTypeStr}.{extension}";
-                //if(mediaType == MediaDefine.MediaType.HttpFlv)
-                //{
-                //    response.link += ".flv";
-                //}
-                string pathProxy = $"/{TYPE}/{imei}_{ch}_{streamType}_{response.token}_{streamType}.{extension}";
-                //string pathProxy = response.link;
+                response.link = $"{Protocol(liveModel.MediaType)}/{liveModel.Imei}_{liveModel.Channel}_{(int)liveModel.StreamType}_{response.token}_{(int)liveModel.MediaType}.{liveModel.Extention}";               
+                string pathProxy = $"/{playType}/{liveModel.Imei}_{liveModel.Channel}_{(int)liveModel.StreamType}_{response.token}_{(int)liveModel.MediaType}.{liveModel.Extention}";
+
                 SocketSession session = new SocketSession();
-                session.PlayType = TYPE;
-                session.Imei = imei;
-                session.Chl = int.Parse(ch);
-                session.StreamType = int.Parse(streamType);
+                session.PlayType = playType;
+                session.Imei = liveModel.Imei;
+                session.Chl = int.Parse(liveModel.Channel);
+                session.StreamType = liveModel.StreamType;
                 string key = session.SetKey();
                 // add origin
                 SocketSession sessionOrigin;
@@ -174,20 +146,128 @@ namespace JT1078NetCore.Http
                 // add proxy
                 SessionProxy sessionProxy = new SessionProxy(response.token);
                 sessionProxy.Key = key;
-                switch (mediaType)
+                switch (liveModel.MediaType)
                 {
-                    
                     case MediaDefine.MediaType.HttpFlv:
                         sessionProxy.MediaType = MediaDefine.MediaType.HttpFlv;
                         Global.SESSIONS_PROXY[response.token] = sessionProxy;
                         break;
                     default:
-                    case MediaDefine.MediaType.WebSocketFlv:                    
+                    case MediaDefine.MediaType.WebSocketFlv:
                         sessionProxy.MediaType = MediaDefine.MediaType.WebSocketFlv;
                         Global.SESSIONS_PROXY[response.token] = sessionProxy;
                         Global.WsServer.AddWebSocketService<SessionProxy>(pathProxy);
                         break;
-                }                                
+                }
+                // add proxy
+                Reponse(ctx, req, response);
+            }
+            catch (Exception ex)
+            {
+                LiveResponse response = new LiveResponse();
+                response.token = string.Empty;
+                response.status = 0;
+                response.link = string.Empty;
+                Reponse(ctx, req, response);
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+        }
+
+        public static void ProcessPlayback(IChannelHandlerContext ctx, IFullHttpRequest req)
+        {
+            try
+            {
+                string playType = MediaDefine.PlayType.Playback;
+                if (req.Method.Name == "OPTIONS")
+                {
+                    LiveResponse resp = new LiveResponse();
+                    resp.token = SocketSession.NewToken();
+                    resp.status = 1;
+                    resp.link = "";
+                    Reponse(ctx, req, resp);
+                    return;
+                }
+                string[] arr = req.Uri.Split('?');
+                NameValueCollection queryParmas = HttpUtility.ParseQueryString(arr.Length > 1 ? arr[1] : "");
+                string[] keys = queryParmas.AllKeys;
+                RequestLiveModel liveModel = new RequestLiveModel();
+                liveModel.Imei = keys.Contains("imei") ? queryParmas.Get("imei") : liveModel.Imei;
+                liveModel.Channel = keys.Contains("ch") ? queryParmas.Get("ch") : liveModel.Channel;
+                string qStreamType = keys.Contains("streamType") ? queryParmas.Get("streamType") : string.Empty;
+                string mediaType = keys.Contains("mediaType") ? queryParmas.Get("mediaType") : string.Empty;
+                string startTime = keys.Contains("startTime") ? queryParmas.Get("startTime") : string.Empty;
+                string endTime = keys.Contains("endTime") ? queryParmas.Get("endTime") : string.Empty;
+                if (qStreamType == "1")
+                {
+                    liveModel.StreamType = MediaDefine.StreamType.Main;
+                }
+                if (!string.IsNullOrEmpty(mediaType))
+                {
+                    switch (byte.Parse(mediaType))
+                    {
+                        case ((byte)MediaDefine.MediaType.WebSocketFlv):
+                            liveModel.MediaType = MediaDefine.MediaType.WebSocketFlv;
+                            break;
+                        case ((byte)MediaDefine.MediaType.HttpFlv):
+                        default:
+                            liveModel.MediaType = MediaDefine.MediaType.HttpFlv;
+                            break;
+                    }
+                }
+                // fixed http-flv
+                liveModel.MediaType = MediaDefine.MediaType.HttpFlv;
+
+                switch (liveModel.MediaType)
+                {
+                    case MediaDefine.MediaType.HttpFlv:
+                    case MediaDefine.MediaType.WebSocketFlv:
+                    default:
+                        liveModel.Extention = "flv";
+                        break;
+                }
+                string path = arr[0];
+                LiveResponse response = new LiveResponse();
+                response.token = SocketSession.NewToken();
+                response.status = 1;
+                response.link = $"{Protocol(liveModel.MediaType, PlayType.Playback)}/{liveModel.Imei}_{liveModel.Channel}_{(int)liveModel.StreamType}_{response.token}_{(int)liveModel.MediaType}.{liveModel.Extention}";
+                string pathProxy = $"/{playType}/{liveModel.Imei}_{liveModel.Channel}_{(int)liveModel.StreamType}_{response.token}_{(int)liveModel.MediaType}.{liveModel.Extention}";
+
+                SocketSession session = new SocketSession();
+                session.PlayType = playType;
+                session.Imei = liveModel.Imei;
+                session.Chl = int.Parse(liveModel.Channel);
+                session.StreamType = liveModel.StreamType;
+                
+                string key = session.SetKey( null, response.token);
+                // add origin
+                SocketSession sessionOrigin;
+                if (!Global.SESSIONS_MAIN.TryGetValue(session.Key, out sessionOrigin))
+                {
+                    // new channel
+                    sessionOrigin = session;
+                    sessionOrigin.InitSession();
+                    Global.SESSIONS_MAIN[sessionOrigin.Key] = sessionOrigin;
+                }
+                if (sessionOrigin.IsConnected)
+                {
+                    response.isReady = false;
+                }
+                // add proxy
+                SessionProxy sessionProxy = new SessionProxy(response.token);
+                sessionProxy.Key = key;                
+                switch (liveModel.MediaType)
+                {
+                    case MediaDefine.MediaType.HttpFlv:
+                        sessionProxy.MediaType = MediaDefine.MediaType.HttpFlv;
+                        Global.SESSIONS_PROXY[response.token] = sessionProxy;
+                        break;
+                    default:
+                    case MediaDefine.MediaType.WebSocketFlv:
+                        sessionProxy.MediaType = MediaDefine.MediaType.WebSocketFlv;
+                        Global.SESSIONS_PROXY[response.token] = sessionProxy;
+                        Global.WsServer.AddWebSocketService<SessionProxy>(pathProxy);
+                        break;
+                }
                 // add proxy
                 Reponse(ctx, req, response);
             }
@@ -207,7 +287,7 @@ namespace JT1078NetCore.Http
             {
                 // parser
                 string[] arr = req.Uri.Split('?');
-                string path = arr[0];                
+                string path = arr[0];
                 var queryParmas = HttpUtility.ParseQueryString(arr.Length > 1 ? arr[1] : "");
                 string token = queryParmas.Get("token").ToString().ToLower();
                 LiveResponse response = new LiveResponse();
@@ -215,7 +295,7 @@ namespace JT1078NetCore.Http
                 response.status = 1;
                 response.link = string.Empty;
                 SessionProxy sessionProxy;
-                if(Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
+                if (Global.SESSIONS_PROXY.TryGetValue(token, out sessionProxy))
                 {
                     sessionProxy.Destroy();
                 }

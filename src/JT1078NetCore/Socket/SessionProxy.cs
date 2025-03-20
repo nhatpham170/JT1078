@@ -31,15 +31,16 @@ namespace JT1078NetCore.Socket
         {
             this.Token = token;
             InitAt = DateUtil.Unix;
-        }        
+        }
         public virtual void SetSession(IChannelHandlerContext channel)
         {
             _channel = channel;
+            ChannelId = _channel.Channel.Id.ToString();
             this.Status = MediaDefine.SessionStatus.Subscribe;
         }
         //public virtual void SendMsg(byte[] data)
         //{
-           
+
         //}
         //public void Subscribe(IChannelHandlerContext Channel)
         //{
@@ -82,7 +83,7 @@ namespace JT1078NetCore.Socket
         }
         public virtual void SendMsg(byte[] data)
         {
-            if (data.Length == 0) return;
+            if (data == null || data.Length == 0) return;
             SentAt = DateUtil.Unix;
             if (MediaType == MediaDefine.MediaType.HttpFlv)
             {
@@ -90,7 +91,8 @@ namespace JT1078NetCore.Socket
                 _channel.WriteAndFlushAsync(buffer);
                 //_channel.Channel.Flush();
             }
-            else {
+            else
+            {
                 Send(data);
             }
         }
@@ -99,7 +101,7 @@ namespace JT1078NetCore.Socket
         protected override void OnOpen()
         {
             StartAt = DateUtil.Unix;
-            string[] arr = Context.RequestUri.LocalPath.Split(new char [] { '.','_'});
+            string[] arr = Context.RequestUri.LocalPath.Split(new char[] { '.', '_' });
             string path = arr[arr.Length - 1];
             Token = arr[3];
             //Key = $"{arr[0]}_{arr[1]}_{arr[2]}_{arr[3]}";
@@ -171,7 +173,10 @@ namespace JT1078NetCore.Socket
                     _ = _channel.CloseAsync();
                 }
                 Global.SESSIONS_PROXY.TryRemove(Token, out _);
-                Global.CHANNEL_PROXY.TryRemove(ChannelId, out _);
+                if (!string.IsNullOrEmpty(ChannelId))
+                {
+                    Global.CHANNEL_PROXY.TryRemove(ChannelId, out _);
+                }                
                 // update session main
                 SocketSession socketSession;
                 if (Global.SESSIONS_MAIN.TryGetValue(Key, out socketSession))
@@ -189,8 +194,20 @@ namespace JT1078NetCore.Socket
         {
             try
             {
-                Global.WsServer.RemoveWebSocketService(Path);
-                Global.SESSIONS_PROXY.TryRemove(Token, out _);
+                switch (MediaType)
+                {
+                    case MediaDefine.MediaType.WebSocketFlv:
+                        Global.WsServer.RemoveWebSocketService(Path);                        
+                        break;
+                    case MediaDefine.MediaType.HttpFlv:
+                    default:
+                        if (this._channel != null)
+                        {
+                            _channel.CloseAsync();                            
+                        }
+                        Close();
+                        break;
+                }
             }
             catch (Exception ex)
             {
