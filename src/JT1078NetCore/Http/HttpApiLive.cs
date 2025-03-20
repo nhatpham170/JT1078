@@ -1,7 +1,10 @@
 using DotNetty.Buffers;
 using DotNetty.Codecs.Http;
 using DotNetty.Transport.Channels;
+using JT1078NetCore.Cache;
 using JT1078NetCore.Common;
+using JT1078NetCore.Common.Models;
+using JT1078NetCore.Rabbit;
 using JT1078NetCore.Socket;
 using JT1078NetCore.Utils;
 using Newtonsoft.Json;
@@ -123,7 +126,7 @@ namespace JT1078NetCore.Http
                 response.status = 1;
                 response.link = $"{Protocol(liveModel.MediaType)}/{liveModel.Imei}_{liveModel.Channel}_{(int)liveModel.StreamType}_{response.token}_{(int)liveModel.MediaType}.{liveModel.Extention}";               
                 string pathProxy = $"/{playType}/{liveModel.Imei}_{liveModel.Channel}_{(int)liveModel.StreamType}_{response.token}_{(int)liveModel.MediaType}.{liveModel.Extention}";
-
+             
                 SocketSession session = new SocketSession();
                 session.PlayType = playType;
                 session.Imei = liveModel.Imei;
@@ -142,6 +145,29 @@ namespace JT1078NetCore.Http
                 if (sessionOrigin.IsConnected)
                 {
                     response.isReady = true;
+                }
+                // check valid and send command
+                if (!string.IsNullOrEmpty(liveModel.Imei) && !response.isReady)
+                {
+                    if (Auth(liveModel.Imei))
+                    {
+                        // send command
+                        string command = $"live,{Global.TCPIp},{Global.TCPPort},{liveModel.Channel},{(int)liveModel.StreamType},1,1#";
+                        string name = "MeadiaServer push cmd live";
+                        if(PushCommand(command, name, liveModel.Imei))
+                        {
+                            response.isReady = true;
+                        }
+                    }
+                    else
+                    {
+                        response.token = string.Empty;
+                        response.status = 2; // invalid
+                        response.link = string.Empty;
+                        Reponse(ctx, req, response);
+                        Global.SESSIONS_MAIN.TryRemove(sessionOrigin.Key,out _);
+                        return;
+                    }                    
                 }
                 // add proxy
                 SessionProxy sessionProxy = new SessionProxy(response.token);
@@ -172,6 +198,7 @@ namespace JT1078NetCore.Http
                 ExceptionHandler.ExceptionProcess(ex);
             }
         }
+
 
         public static void ProcessPlayback(IChannelHandlerContext ctx, IFullHttpRequest req)
         {
@@ -251,6 +278,30 @@ namespace JT1078NetCore.Http
                 if (sessionOrigin.IsConnected)
                 {
                     response.isReady = false;
+                }
+                // check valid and send command
+                if (!string.IsNullOrEmpty(liveModel.Imei) && !response.isReady)
+                {
+                    if (Auth(liveModel.Imei))
+                    {
+                        // send command
+                        //string command = $"live,{Global.TCPIp},${Global.Port},${liveModel.Channel},${liveModel.StreamType},1,1#";
+                        string command = $"playback,{Global.TCPIp},{Global.TCPPort},{liveModel.Channel},{(int)liveModel.StreamType},0,0,1,{startTime},{endTime},file#";
+                        string name = "MeadiaServer push cmd playback";
+                        if (PushCommand(command, name, liveModel.Imei))
+                        {
+                            response.isReady = true;
+                        }
+                    }
+                    else
+                    {
+                        response.token = string.Empty;
+                        response.status = 2; // invalid
+                        response.link = string.Empty;
+                        Reponse(ctx, req, response);
+                        Global.SESSIONS_MAIN.TryRemove(sessionOrigin.Key, out _);
+                        return;
+                    }
                 }
                 // add proxy
                 SessionProxy sessionProxy = new SessionProxy(response.token);
@@ -332,6 +383,50 @@ namespace JT1078NetCore.Http
             {
                 ExceptionHandler.ExceptionProcess(ex);
             }
+        }
+        private static bool Auth(string imei)
+        {
+            try
+            {
+                return DFSessions.Instance.CheckValid(imei);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+            return false;
+        }
+
+        private static bool PushCommand(string command, string name, string imei)
+        {
+            try
+            {
+                if (RabbitMQHelper.IsPushCommandQueue)
+                {
+                    ApiEvent apiEvent = new ApiEvent();
+                    apiEvent.Timestamp = DateUtil.Unix;
+                    apiEvent.ActionType = ApiEvent.ActionTypes.CREATE;
+                    apiEvent.ObjType = ApiEvent.ObjTypes.COMMAND;
+                    CommandQueue commandQueue = new CommandQueue();
+                    commandQueue.IdAuto();
+                    commandQueue.CommandName = name;
+                    commandQueue.CommandText = command;
+                    commandQueue.CommandCode = commandQueue.ID * -1;
+                    commandQueue.CreateDate = DateTime.UtcNow;
+                    commandQueue.Status = 1;
+                    commandQueue.IsSend = "0";
+                    commandQueue.IsOfflineSend = "0";
+                    commandQueue.Imei = imei;
+                    apiEvent.ObjNew = commandQueue;
+                   _ = RabbitMQHelper.RMQPushCommandQueueProducer.put(RabbitMQHelper.QueuePushCommandQueue, apiEvent);
+                    return true;
+                }                
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+            return false;
         }
     }
 }

@@ -21,6 +21,9 @@ using Microsoft.VisualBasic;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
+using JT1078NetCore.Services;
+using JT1078NetCore.Cache;
+using JT1078NetCore.Rabbit;
 
 namespace JT1078ServerWF
 {
@@ -29,6 +32,7 @@ namespace JT1078ServerWF
         private bool status = false;
         private static ServerBootstrap bootstrap;
         private static IChannel bootstrapChannel;
+        private static List<IChannel> listChannel;
         public static ConcurrentDictionary<string, IChannel> Channels = new ConcurrentDictionary<string, IChannel>();
         public static ConcurrentDictionary<string, SocketSession> Sessions = new ConcurrentDictionary<string, SocketSession>();
         public Form1()
@@ -44,13 +48,24 @@ namespace JT1078ServerWF
                .SetBasePath(AppContext.BaseDirectory)
                .AddJsonFile("appsettings.json")
                .Build();
-                var sad = Configuration["tcpPort"].ToString();
+                Global.RedisConnStr = Configuration["redisConnStr"].ToString();
+                CacheHelper.CacheKeyPrefix = Configuration["cacheKeyPrefix"].ToString();
+
+
+                RabbitMQHelper.IsPushCommandQueue = bool.Parse(Configuration["isPushCommandQueue"].ToString());
+                RabbitMQHelper.RMQPushCommandQueue = Configuration["rmqPushCommandQueue"].ToString();
+                RabbitMQHelper.QueuePushCommandQueue = Configuration["queuePushCommandQueue"].ToString();
+
+                Global.RedisConnStr = Configuration["redisConnStr"].ToString();
+                Global.TCPIp = Configuration["tcpIp"].ToString();
+                txtTCPPort.Text = Configuration["tcpPort"].ToString();
                 txtHostAPI.Text =Configuration["hostAPI"].ToString();
                 txtPortAPI.Text = Configuration["portAPI"].ToString();
                 txtPortWs.Text = Configuration["wsFlvPort"].ToString();
                 txtHttpFlv.Text = Configuration["httpFlvPort"].ToString();
                 ckbSsl.Checked = bool.Parse(Configuration["ssl"]);
                 txtLogPath.Text = Configuration["logPath"].ToString();
+
             }
             catch (Exception ex)
             {
@@ -124,10 +139,34 @@ namespace JT1078ServerWF
             }
         }
 
+        private async void InitRMQ()
+        {
+            try
+            {
+                if (RabbitMQHelper.IsPushCommandQueue)
+                {                    
+                    RabbitMQHelper.RMQPushCommandQueueProducer = new JT1078NetCore.Rabbit.RabbitMQProducer(RabbitMQHelper.RMQPushCommandQueue);                    
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.ExceptionProcess(ex);
+            }
+        }
+
         private async void button1_Click(object sender, EventArgs e)
         {
             try
             {
+                InitRMQ();
+                //DFSessions.Instance.CheckValid("825066636533");
+                //DFSessions.Instance.CheckValid("015000085960");
+                //RedisService redisService = new RedisService("localhost:6379,abortConnect=false");
+                //redisService.Set("demo", "value");
+
+                //var demo213 = JsonConvert.DeserializeObject<string>(redisService.Get("demo"));
+                //int[] listPortLive = new int [] { 2202, 2203 };
+                listChannel = new List<IChannel>();
                 LoadConfig();
                 //Log.WriteDeviceLog("213213", "demo");
                 var bossGroup = new MultithreadEventLoopGroup();
@@ -157,6 +196,12 @@ namespace JT1078ServerWF
                       }));
                 new WsService().Init(Global.WsPort);
                 bootstrapChannel = await bootstrap.BindAsync(Global.TCPPort);
+                //
+                //for (int i = 0; i < listPortLive.Length; i++)
+                //{
+                //    IChannel channel = await bootstrap.BindAsync(listPortLive[i]);
+                //    listChannel.Add(channel);
+                //}
                 JT1078NetCore.Http.WebSocketServer webSocketServer = new JT1078NetCore.Http.WebSocketServer();
                 await webSocketServer.Init(Global.APIPort);
 
