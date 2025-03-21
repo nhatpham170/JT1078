@@ -51,11 +51,7 @@ namespace JT1078NetCore.Socket
                           channel.Pipeline.AddLast("hexDecoder", new HexDecoder());
                           channel.Pipeline.AddLast("dataFilter", new SocketProcess());
                           channel.Pipeline.AddLast(new StringDecoder(), new SocketHandler());
-                      }));
-                //bootstrap.LocalAddress("127.0.0.1",2202);
-                //bootstrap.LocalAddress("113.22.61.166", 2202);                                
-                //IPAddress iPAddress = IPAddress.Parse("127.0.0.1");
-                //IPEndPoint iPEndPoint = new IPEndPoint(iPAddress, 2202);
+                      }));            
                 new WsService().Init(Global.WsPort);
                 return bootstrap.BindAsync(Global.TCPPort);
 

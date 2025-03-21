@@ -29,7 +29,11 @@ namespace JT1078NetCore.Protocol.JT1078
 
                     foreach (string item in listDataMedia)
                     {
-                        //Log.WriteDeviceLog("Hex: " + item, session.Imei);
+                        if (Global.IsLogData)
+                        {
+                            Log.WriteDeviceLog(item, session.Imei);
+                        }
+
                         JT1078Package package = JT1078Serializer.Deserialize(item.ToHexBytes());
                         JT1078Package fullpackage = JT1078Serializer.Merge(package, JT808ChannelType.History);
                         if (fullpackage != null)

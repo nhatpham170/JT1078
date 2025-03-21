@@ -15,7 +15,7 @@ namespace JT1078NetCore.Socket
         public string Protocol { get; set; }
         public int FormatMedia { get; set; }
         public string PlayType { get; set; } // live | playback
-        public string Imei { get; set; }
+        public string Imei { get; set; }  = string.Empty;
         public int Chl { get; set; }
         public MediaDefine.StreamType StreamType { get; set; } // 0: Main | 1: sub
         public bool IsConnected { get; set; }
@@ -43,6 +43,7 @@ namespace JT1078NetCore.Socket
             Channel = channel;
             ChannelId = channel.Channel.Id.ToString();
             Log.WriteFeatureLog($"[START]: session: {Key}", TYPE_LOG);
+            Log.WriteDeviceLog($"[START]: session: {Key}", Imei);
             Update();
         }
         public string SetKey(string key = null, string token = "")
@@ -66,6 +67,7 @@ namespace JT1078NetCore.Socket
         {
             _initAt = DateUtil.Unix;
             Log.WriteFeatureLog($"[INIT]: session: {Key}", TYPE_LOG);
+            Log.WriteDeviceLog($"[INIT]: session: {Key}", Imei);            
         }
 
         public static string NewToken()
@@ -78,12 +80,14 @@ namespace JT1078NetCore.Socket
             if (Subscribers.ContainsKey(token))
             {
                 Log.WriteFeatureLog($"[REMOVE-TOKEN]: session: {Key}, token: {token}", TYPE_LOG);
+                Log.WriteDeviceLog($"[REMOVE-TOKEN]: session: {Key}, token: {token}", Imei);                
                 Subscribers.Remove(token);
                 //Update();
             }
             if(Subscribers.Count == 0 )
             {
                 Log.WriteFeatureLog($"[Unsubscirbe]: session: {Key}, Not player", TYPE_LOG);
+                Log.WriteDeviceLog($"[Unsubscirbe]: session: {Key}, Not player", Imei);
                 Stop(); 
             }
         }
@@ -91,6 +95,7 @@ namespace JT1078NetCore.Socket
         public void AddSubscribe(SessionProxy proxy)
         {
             Log.WriteFeatureLog($"[ADD-TOKEN]: token: {proxy.Token}", TYPE_LOG);
+            Log.WriteDeviceLog($"[ADD-TOKEN]: token: {proxy.Token}", Imei);
             if (LastIFrame != null)
             {
                 byte[] frame = new FlvEncoder().EncoderVideoTag(LastIFrame as JT1078Package, true);
@@ -120,6 +125,7 @@ namespace JT1078NetCore.Socket
                     {
                         // timeout
                         Log.WriteFeatureLog($"[TIMEOUT]: session: {Key}, Not player", TYPE_LOG);
+                        Log.WriteDeviceLog($"[TIMEOUT]: session: {Key}, Not player", Imei);
                         Stop();
                     }
                 }
@@ -130,6 +136,7 @@ namespace JT1078NetCore.Socket
                 if (DateUtil.Unix - _initAt > 15)
                 {
                     Log.WriteFeatureLog($"[TIMEOUT]: session: {Key}, Device not connect", TYPE_LOG);
+                    Log.WriteDeviceLog($"[TIMEOUT]: session: {Key}, Device not connect", Imei);
                     Destroy();
                 }
             }
@@ -159,8 +166,10 @@ namespace JT1078NetCore.Socket
                 {
                     item.Destroy();
                     Log.WriteFeatureLog($"[DESTROY]: session: {Key}, token: {item.Token}", TYPE_LOG);
+                    Log.WriteDeviceLog($"[DESTROY]: session: {Key}, token: {item.Token}", Imei);
                 }
                 Log.WriteFeatureLog($"[DESTROY]: session: {Key}", TYPE_LOG);
+                Log.WriteDeviceLog($"[DESTROY]: session: {Key}", Imei);
             }
             catch (Exception ex)
             {
@@ -183,6 +192,7 @@ namespace JT1078NetCore.Socket
                         channel.CloseAsync();
                     }
                     Log.WriteFeatureLog($"[STOP]: session: {Key}", TYPE_LOG);
+                    Log.WriteDeviceLog($"[STOP]: session: {Key}", Imei);
                 }
             }
             catch (Exception ex)

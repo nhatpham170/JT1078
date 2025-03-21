@@ -92,6 +92,7 @@ namespace JT1078NetCore.Http
                 liveModel.Channel = keys.Contains("ch") ? queryParmas.Get("ch") : liveModel.Channel;
                 string qStreamType = keys.Contains("streamType") ? queryParmas.Get("streamType") : string.Empty;
                 string mediaType = keys.Contains("mediaType") ? queryParmas.Get("mediaType") : string.Empty;
+                
                 if (qStreamType == "1")
                 {
                     liveModel.StreamType = MediaDefine.StreamType.Main;
@@ -135,8 +136,10 @@ namespace JT1078NetCore.Http
                 string key = session.SetKey();
                 // add origin
                 SocketSession sessionOrigin;
+                Log.WriteDeviceLog($"[LIVE] Request key: {key}, proxy: {pathProxy}", liveModel.Imei);
                 if (!Global.SESSIONS_MAIN.TryGetValue(session.Key, out sessionOrigin))
                 {
+                    Log.WriteDeviceLog($"[LIVE] INIT  key: {key}, proxy: {path}", liveModel.Imei);
                     // new channel
                     sessionOrigin = session;
                     sessionOrigin.InitSession();
@@ -144,6 +147,7 @@ namespace JT1078NetCore.Http
                 }
                 if (sessionOrigin.IsConnected)
                 {
+                    Log.WriteDeviceLog($"[LIVE] IsReady  key: {key}, proxy: {pathProxy}", liveModel.Imei);
                     response.isReady = true;
                 }
                 // check valid and send command
@@ -157,10 +161,12 @@ namespace JT1078NetCore.Http
                         if(PushCommand(command, name, liveModel.Imei))
                         {
                             response.isReady = true;
+                            Log.WriteDeviceLog($"[LIVE] Send command  key: {key}, proxy: {pathProxy}, command: {command}", liveModel.Imei);
                         }
                     }
                     else
                     {
+                        Log.WriteDeviceLog($"[LIVE] Device offline  key: {key}, proxy: {pathProxy}", liveModel.Imei);
                         response.token = string.Empty;
                         response.status = 2; // invalid
                         response.link = string.Empty;
@@ -198,7 +204,6 @@ namespace JT1078NetCore.Http
                 ExceptionHandler.ExceptionProcess(ex);
             }
         }
-
 
         public static void ProcessPlayback(IChannelHandlerContext ctx, IFullHttpRequest req)
         {
@@ -266,10 +271,12 @@ namespace JT1078NetCore.Http
                 session.StreamType = liveModel.StreamType;
                 
                 string key = session.SetKey( null, response.token);
+                Log.WriteDeviceLog($"[PLAYBACK] Request  key: {key}, proxy: {pathProxy}", liveModel.Imei);
                 // add origin
                 SocketSession sessionOrigin;
                 if (!Global.SESSIONS_MAIN.TryGetValue(session.Key, out sessionOrigin))
                 {
+                    Log.WriteDeviceLog($"[PLAYBACK] Init  key: {key}, proxy: {pathProxy}", liveModel.Imei);
                     // new channel
                     sessionOrigin = session;
                     sessionOrigin.InitSession();
@@ -277,6 +284,7 @@ namespace JT1078NetCore.Http
                 }
                 if (sessionOrigin.IsConnected)
                 {
+                    Log.WriteDeviceLog($"[PLAYBACK] IsReady  key: {key}, proxy: {pathProxy}", liveModel.Imei);
                     response.isReady = false;
                 }
                 // check valid and send command
@@ -286,15 +294,17 @@ namespace JT1078NetCore.Http
                     {
                         // send command
                         //string command = $"live,{Global.TCPIp},${Global.Port},${liveModel.Channel},${liveModel.StreamType},1,1#";
-                        string command = $"playback,{Global.TCPIp},{Global.TCPPort},{liveModel.Channel},{(int)liveModel.StreamType},0,0,1,{startTime},{endTime},file#";
+                        string command = $"playback,{Global.TCPIp},{Global.TCPPortPlayback},{liveModel.Channel},{(int)liveModel.StreamType},0,0,1,{startTime},{endTime},file#";
                         string name = "MeadiaServer push cmd playback";
                         if (PushCommand(command, name, liveModel.Imei))
                         {
+                            Log.WriteDeviceLog($"[PLAYBACK] Send Command  key: {key}, proxy: {pathProxy}, command: {command}", liveModel.Imei);
                             response.isReady = true;
                         }
                     }
                     else
                     {
+                        Log.WriteDeviceLog($"[PLAYBACK] Device offline  key: {key}, proxy: {pathProxy}", liveModel.Imei);
                         response.token = string.Empty;
                         response.status = 2; // invalid
                         response.link = string.Empty;
@@ -388,6 +398,9 @@ namespace JT1078NetCore.Http
         {
             try
             {
+                if (!Global.CheckOnline) {
+                    return true;
+                }
                 return DFSessions.Instance.CheckValid(imei);
             }
             catch (Exception ex)

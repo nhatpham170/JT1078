@@ -31,13 +31,18 @@ namespace JT1078NetCore.Common
 
         public static string LogPath;
         public static int TCPPort;       
-        public static string TCPIp;       
+        public static string TCPIp;
+        public static int TCPPortPlayback;
         public static string APIHost;
         public static int APIPort;
         public static int HttpFlvPort;
         public static string WsHost;
         public static int WsPort;
         public static bool IsSsl;
+        public static bool IsLogData;
+
+        public static bool EnableAuth; // valid imei
+        public static bool CheckOnline; // check device online
 
         public static string RedisConnStr;
         public static RabbitMQProducer RMQPushCommandQueue;

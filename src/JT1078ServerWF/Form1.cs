@@ -32,6 +32,7 @@ namespace JT1078ServerWF
         private bool status = false;
         private static ServerBootstrap bootstrap;
         private static IChannel bootstrapChannel;
+        private static IChannel bootstrapChannelPlayback;
         private static List<IChannel> listChannel;
         public static ConcurrentDictionary<string, IChannel> Channels = new ConcurrentDictionary<string, IChannel>();
         public static ConcurrentDictionary<string, SocketSession> Sessions = new ConcurrentDictionary<string, SocketSession>();
@@ -51,19 +52,24 @@ namespace JT1078ServerWF
                 Global.RedisConnStr = Configuration["redisConnStr"].ToString();
                 CacheHelper.CacheKeyPrefix = Configuration["cacheKeyPrefix"].ToString();
 
-
                 RabbitMQHelper.IsPushCommandQueue = bool.Parse(Configuration["isPushCommandQueue"].ToString());
                 RabbitMQHelper.RMQPushCommandQueue = Configuration["rmqPushCommandQueue"].ToString();
                 RabbitMQHelper.QueuePushCommandQueue = Configuration["queuePushCommandQueue"].ToString();
 
                 Global.RedisConnStr = Configuration["redisConnStr"].ToString();
+                Global.IsLogData = bool.Parse(Configuration["isLogData"]);
+                Global.CheckOnline = bool.Parse(Configuration["checkOnline"]);
+                Global.EnableAuth = bool.Parse(Configuration["enableAuth"]);
                 Global.TCPIp = Configuration["tcpIp"].ToString();
+                
+                Global.TCPPortPlayback = int.Parse(Configuration["tcpPortPlayback"].ToString());
                 txtTCPPort.Text = Configuration["tcpPort"].ToString();
                 txtHostAPI.Text =Configuration["hostAPI"].ToString();
                 txtPortAPI.Text = Configuration["portAPI"].ToString();
                 txtPortWs.Text = Configuration["wsFlvPort"].ToString();
                 txtHttpFlv.Text = Configuration["httpFlvPort"].ToString();
                 ckbSsl.Checked = bool.Parse(Configuration["ssl"]);
+            
                 txtLogPath.Text = Configuration["logPath"].ToString();
 
             }
@@ -196,6 +202,10 @@ namespace JT1078ServerWF
                       }));
                 new WsService().Init(Global.WsPort);
                 bootstrapChannel = await bootstrap.BindAsync(Global.TCPPort);
+                if(Global.TCPPortPlayback > 0)
+                {
+                    bootstrapChannelPlayback = await bootstrap.BindAsync(Global.TCPPortPlayback);
+                }
                 //
                 //for (int i = 0; i < listPortLive.Length; i++)
                 //{

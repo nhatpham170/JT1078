@@ -60,7 +60,8 @@ namespace JT1078NetCore.Protocol.JT1078
                     session.StreamType = StreamType.Main;
                     session.PlayType = PlayType.Live;
                     session.SetKey(keyMain);
-                }else
+                }
+                else
                 {
                     // check playback
                     var playback = Global.SESSIONS_MAIN.First(x => x.Key.StartsWith(keyPlayback) && !x.Value.IsConnected);
